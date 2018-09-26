@@ -14,6 +14,11 @@
 #include <netinet/in.h>
 #include <ev.h>
 #include <signal.h>
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+using namespace rapidjson;
+
 json_t * config, *start_params, *fake_rsp;
 char * start_params_str;
 static json_error_t       error; 
@@ -46,8 +51,57 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		//fprintf(stderr,"result in cb:%s\n", (const char * )message);
 		fprintf(stderr,"message size:%u, \n",size);
 		//memcpy(pt->buffer,  message, size);
-		//fprintf(stderr, "%s\n", ((const char *)message));
-		int len = send(fd, message, size, 0);
+		fprintf(stderr, "%s\n", ((const char *)message));
+		char buffer[size+1];
+		bzero(buffer,sizeof(buffer));
+		memcpy(buffer, message, size);
+		Document dd;
+		dd.Parse(buffer);
+
+
+		fprintf(stderr,"recordId:%s\n",dd["recordId"].GetString());
+		fprintf(stderr,"recordId:%s\n",dd["refText"].GetString());
+
+
+		const char * refText = "";
+		float pron = 0.0, fluency=0.0, stress = 0.0;
+		if(dd.HasMember("refText")){
+			refText = dd["refText"].GetString();
+		}
+		if(dd.HasMember("result") ){
+			Value & res = dd["result"];
+			if(res.HasMember("pron")){
+				pron = res["pron"].GetDouble();
+			}
+			if(res.HasMember("rhythm") && res["rhythm"].HasMember("stress")){
+				stress = res["rhythm"]["stress"].GetDouble();
+			}
+			if(res.HasMember("fluency") && res["fluency"].HasMember("overall")){
+				fluency = res["fluency"]["overall"].GetDouble();
+			}
+		}
+
+
+		Document d;
+		d.SetObject();
+		Value result;
+		result.SetObject();
+		d.AddMember("errId", Value(0), d.GetAllocator());
+		d.AddMember("errMsg", "", d.GetAllocator());
+		d.AddMember("userId", "guest", d.GetAllocator());
+		d.AddMember("ts", time(NULL), d.GetAllocator());
+		result.AddMember("scoreProNoAccent", pron,d.GetAllocator());
+		result.AddMember("scoreProFluency", fluency,d.GetAllocator());
+		result.AddMember("scoreProStress", stress ,d.GetAllocator());
+		result.AddMember("sentence", Value("").SetString(refText, strlen(refText)) ,d.GetAllocator());
+		d.AddMember("result", result, d.GetAllocator());
+		//result.AddMember("sentence",Value(refText) ,d.GetAllocator());
+
+		StringBuffer stringbuffer;
+		Writer<StringBuffer> writer(stringbuffer);
+		d.Accept(writer);
+		const char * str  = stringbuffer.GetString();
+		int len = send(fd, str, strlen(str), 0);
 		fprintf(stderr, "write %d bytes to ws\n", len);
 		//close(fd);
 	}
@@ -55,25 +109,57 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 	return 0;
 }
 void handle_pack(pack_t * pack, int fd){
+
+	fprintf(stderr, "handle pack:%d\n", pack->type);
 	if(pack->type == 1){
-		fprintf(stderr, "handle pack:%s", pack->data);
-		json_error_t error;
-		json_t * msg = json_loads(pack->data, 0 , &error);	
-		if (!msg) {
-			fprintf(stderr, "json error on line %d: %s\n", error.line, error.text);
-		}
-		const char *action =  json_string_value(json_object_get(msg, "action"));
+		/*
+		   json_error_t error;
+		   json_t * msg = json_loads(pack->data, 0 , &error);	
+		   if (!msg) {
+		   fprintf(stderr, "json error on line %d: %s\n", error.line, error.text);
+		   }
+		   const char *action =  json_string_value(json_object_get(msg, "action"));
+		 */
+		fprintf(stderr, "handle pack:%s,\n", pack->data);
+		Document msg;
+		msg.Parse(pack->data);
+		const char * action = msg["action"].GetString();
+		//Value  req(msg["request"], msg.GetAllocator());
+
+
+
 		if(!strcmp(action,"stop")){
 			fprintf(stderr, "\nstop\n");
 			ssound_stop(engine);
 		}else if(!strcmp(action, "start")){
+			const char * coreType = msg["request"]["coreType"].GetString();
+			const char * refText = msg["request"]["refText"].GetString();
 			fprintf(stderr, "\nstart\n");
 			char id[64];
-			ssound_start(engine, start_params_str, id, ssound_cb, &fd);
+			Document startP;
+			//startP.SetObject();
+			fprintf(stderr, "\nbefore\n");
+			startP.Parse(start_params_str);
+			fprintf(stderr, "\nstart\n");
+			//startP["request"].AddMember("coreType", Value("").SetString(coreType, strlen(coreType)), startP.GetAllocator());
+			//startP["request"].AddMember("refText", Value("").SetString(refText, strlen(refText)), startP.GetAllocator());
+			//startP["request"]["coreType"].SetString(coreType, strlen(coreType));
+			startP["request"]["refText"].SetString(refText, strlen(refText));
+			StringBuffer stringbuffer;
+			Writer<StringBuffer> writer(stringbuffer);
+			startP.Accept(writer);
+			const char * str  = stringbuffer.GetString();
+
+
+
+			fprintf(stderr, "\nstart:%s\n",str);
+
+			//ssound_start(engine, start_params_str, id, ssound_cb, &fd);
+			ssound_start(engine, str, id, ssound_cb, &fd);
 		}
 
 	}else{
-			ssound_feed(engine, pack->data, pack->data_len);
+		ssound_feed(engine, pack->data, pack->data_len);
 	}
 }
 int initSS(const char * config_path)
@@ -183,6 +269,7 @@ static void read_audio_cb(EV_P_ ev_io *watcher, int revents){
 		return;
 	}
 	int len = recv(watcher->fd,&g_buffer[bytes], sizeof(g_buffer)-bytes, 0);
+
 	//bytes = recv(watcher->fd,&pack, sizeof(pack), 0);
 	if(len < 0){
 		perror("recv error");
@@ -211,8 +298,6 @@ static void read_audio_cb(EV_P_ ev_io *watcher, int revents){
 }
 int   main(int argc, char * argv[]){
 	////static void (*on_audio_cb)(char *, int );
-
-
 	//on_audio_cb = (void (*)(char *, int))arg;
 	if(argc < 2 ){
 		printf("Usage :%s %s \n", argv[0], "<config.json>");

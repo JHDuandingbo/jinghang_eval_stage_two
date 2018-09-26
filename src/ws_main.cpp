@@ -71,11 +71,13 @@ static int  connnet_to_asr(void){
 		perror("Socket:");
 		exit(EXIT_FAILURE);
 	}
+	int flags =1;
+	setsockopt(tcp_sock, SOL_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags));
+
 	if (connect(tcp_sock , (struct sockaddr *)&server , sizeof(server)) < 0){
 		puts("connect to asr server failed");
 		return -1;
 	}
-	int flags;
 	flags = fcntl(tcp_sock, F_GETFL);
 	flags |= O_NONBLOCK;
 	if(-1 == fcntl(tcp_sock, F_SETFL, flags)){
@@ -107,19 +109,20 @@ void initWS(){
 			pack.data_len = length;
 			assert(sizeof(pack.data) > length);
 			memcpy(pack.data, message, length);
-			fprintf(stderr, "socket:%d\n", tcp_sock);
+			//fprintf(stderr, "socket:%d\n", tcp_sock);
 			int bytes= send(tcp_sock, &pack, sizeof(pack), 0);
 			if(bytes < 0){
-			   perror("write failed!");
+			perror("write failed!");
+				exit(1);
 			}else{
 			//printf("write %d bytes to tcp\n", bytes);
 
 			}
 			if(opCode == uWS::OpCode::TEXT){
-				std::cout<< message<<std::endl;
+			std::cout<< message<<std::endl;
 			}
 
-			});
+	});
 	h.onConnection([](uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest req) {
 			std::cout<<"url:" << req.getUrl().toString()<<std::endl;
 			//connnet_to_asr(loop);
@@ -133,7 +136,7 @@ void initWS(){
 	h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length) {
 			std::cout << "SERVER  CLOSE: " << code << std::endl;
 			});
-	if (h.listen(60001)) {
+	if (h.listen(3000)) {
 		h.run();
 	}else{
 		puts("fail to start server");
