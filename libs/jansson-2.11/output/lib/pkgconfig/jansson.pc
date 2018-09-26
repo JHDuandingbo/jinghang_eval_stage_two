@@ -1,0 +1,10 @@
+prefix=/home/ubuntu/streaming_server_ws/uWebSockets/libs/jansson-2.11/output
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: Jansson
+Description: Library for encoding, decoding and manipulating JSON data
+Version: 2.11
+Libs: -L${libdir} -ljansson
+Cflags: -I${includedir}
