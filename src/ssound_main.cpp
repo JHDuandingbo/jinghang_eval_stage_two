@@ -30,12 +30,6 @@ typedef struct {
 	int id;
 	int state;
 }worker_t;
-int
-init_engine(const char * config_str){
-	puts("init_engine");
-	puts(config_str);
-
-}
 
 	int
 ssound_cb(const void *usrdata,              const char *id, int type,               const void *message, int size)
@@ -51,20 +45,24 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		//fprintf(stderr,"result in cb:%s\n", (const char * )message);
 		fprintf(stderr,"message size:%u, \n",size);
 		//memcpy(pt->buffer,  message, size);
-		fprintf(stderr, "%s\n", ((const char *)message));
 		char buffer[size+1];
 		bzero(buffer,sizeof(buffer));
 		memcpy(buffer, message, size);
+		fprintf(stderr, "%s\n", buffer);
 		Document dd;
 		dd.Parse(buffer);
 
 
-		fprintf(stderr,"recordId:%s\n",dd["recordId"].GetString());
-		fprintf(stderr,"recordId:%s\n",dd["refText"].GetString());
+		//fprintf(stderr,"recordId:%s\n",dd["recordId"].GetString());
+		//fprintf(stderr,"recordId:%s\n",dd["refText"].GetString());
 
 
 		const char * refText = "";
 		float pron = 0.0, fluency=0.0, stress = 0.0;
+		if(dd.HasMember("errId")){
+				return 0 ;
+		}
+		
 		if(dd.HasMember("refText")){
 			refText = dd["refText"].GetString();
 		}
@@ -90,9 +88,20 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		d.AddMember("errMsg", "", d.GetAllocator());
 		d.AddMember("userId", "guest", d.GetAllocator());
 		d.AddMember("ts", time(NULL), d.GetAllocator());
-		result.AddMember("scoreProNoAccent", pron,d.GetAllocator());
-		result.AddMember("scoreProFluency", fluency,d.GetAllocator());
-		result.AddMember("scoreProStress", stress ,d.GetAllocator());
+		//result.AddMember("scoreProNoAccent", pron,d.GetAllocator());
+		//result.AddMember("scoreProFluency", fluency,d.GetAllocator());
+		//result.AddMember("scoreProStress", stress ,d.GetAllocator());
+		char tmp[BUFSIZ];
+		snprintf(tmp, sizeof(tmp), "%f", pron);
+		result.AddMember("scoreProNoAccent", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
+
+		bzero(tmp,sizeof(tmp));
+		snprintf(tmp, sizeof(tmp), "%f", fluency);
+		result.AddMember("scoreProFluency", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
+
+		bzero(tmp,sizeof(tmp));
+		snprintf(tmp, sizeof(tmp), "%f", stress);
+		result.AddMember("scoreProStress", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
 		result.AddMember("sentence", Value("").SetString(refText, strlen(refText)) ,d.GetAllocator());
 		d.AddMember("result", result, d.GetAllocator());
 		//result.AddMember("sentence",Value(refText) ,d.GetAllocator());

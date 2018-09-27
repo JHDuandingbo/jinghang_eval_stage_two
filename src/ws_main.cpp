@@ -49,8 +49,10 @@ static void asr_client_read_cb(EV_P_ ev_io *watcher, int revents){
 		return;
 	}else{
 		fprintf(stderr, "got result:%s\n", buffer);
+		if(g_ws){
 		g_ws->send(buffer, bytes, uWS::OpCode::TEXT);
-		g_ws->terminate();
+		}
+		//g_ws->terminate();
 
 	}
 }
@@ -134,6 +136,7 @@ void initWS(){
 			std::cout << "CLIENT CLOSE: " << code << std::endl;
 			});
 	h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length) {
+			g_ws = NULL;
 			std::cout << "SERVER  CLOSE: " << code << std::endl;
 			});
 	if (h.listen(3000)) {
