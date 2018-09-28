@@ -19,19 +19,13 @@
 #include "rapidjson/stringbuffer.h"
 using namespace rapidjson;
 
-json_t * config, *start_params, *fake_rsp;
-char * start_params_str;
-static json_error_t       error; 
+//json_t * config, *start_params, *fake_rsp;
+//char * start_params_str;
+//static json_error_t       error; 
 static struct ssound * engine = NULL;
 
 
-typedef struct {
-	struct ssound * engine;
-	int id;
-	int state;
-}worker_t;
-
-	int
+int
 ssound_cb(const void *usrdata,              const char *id, int type,               const void *message, int size)
 {
 
@@ -53,47 +47,31 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		dd.Parse(buffer);
 
 
+		//fprintf(stderr,"recordId:%s\n",dd["recordId"].GetString());
+		//fprintf(stderr,"recordId:%s\n",dd["refText"].GetString());
 
 
 		const char * refText = "";
-		const char * coreType ="";
 		float pron = 0.0, fluency=0.0, stress = 0.0;
 		if(dd.HasMember("errId")){
-			return 0 ;
+				return 0 ;
 		}
-
-		if(dd.HasMember("params") && dd["params"].HasMember("request") && dd["params"]["request"].HasMember("coreType")){
-			coreType = dd["params"]["request"]["coreType"].GetString();
+		
+		if(dd.HasMember("refText")){
+			refText = dd["refText"].GetString();
 		}
-		fprintf(stderr, "\ncoreType:%s, %s:%d\n",coreType,__FUNCTION__, __LINE__);
-		if(!strcmp(coreType, "en.sent.score") || !strcmp(coreType,"en.word.score")){
-			if(dd.HasMember("refText")){
-				refText = dd["refText"].GetString();
+		if(dd.HasMember("result") ){
+			Value & res = dd["result"];
+			if(res.HasMember("pron")){
+				pron = res["pron"].GetDouble();
 			}
-			if(dd.HasMember("result") ){
-				Value & res = dd["result"];
-				if(res.HasMember("pron")){
-					pron = res["pron"].GetDouble();
-				}
-				if(res.HasMember("rhythm") && res["rhythm"].HasMember("stress")){
-					stress = res["rhythm"]["stress"].GetDouble();
-				}
-				if(res.HasMember("fluency") && res["fluency"].HasMember("overall")){
-					fluency = res["fluency"]["overall"].GetDouble();
-				}
+			if(res.HasMember("rhythm") && res["rhythm"].HasMember("stress")){
+				stress = res["rhythm"]["stress"].GetDouble();
+			}
+			if(res.HasMember("fluency") && res["fluency"].HasMember("overall")){
+				fluency = res["fluency"]["overall"].GetDouble();
 			}
 		}
-		fprintf(stderr, "\ndebug:%s:%d\n",__FUNCTION__, __LINE__);
-		if(!strcmp(coreType, "en.pict.score") || !strcmp(coreType,"en.pgan.score")){
-			if(dd.HasMember("result") ){
-				Value & res = dd["result"];
-				if(res.HasMember("overall")){
-					fluency = stress = pron = res["overall"].GetDouble();
-				}
-			}
-
-		}
-		fprintf(stderr, "\ndebug:%s:%d\n",__FUNCTION__, __LINE__);
 
 
 		Document d;
@@ -133,9 +111,10 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 	//	pthread_cond_signal(&pt->cond);
 	return 0;
 }
-void handle_pack(pack_t * pack, int fd){
-
+//void handle_pack(pack_t * pack, int fd){
+void handle_message(ws_client_t * ws_client){
 	fprintf(stderr, "handle pack:%d\n", pack->type);
+	int binary = ws_client->binary;
 	if(pack->type == 1){
 		/*
 		   json_error_t error;
@@ -145,38 +124,31 @@ void handle_pack(pack_t * pack, int fd){
 		   }
 		   const char *action =  json_string_value(json_object_get(msg, "action"));
 		 */
-		fprintf(stderr, "handle pack:<%s>,\n", pack->data);
+		fprintf(stderr, "handle pack:%s,\n", pack->data);
 		Document msg;
 		msg.Parse(pack->data);
-
-		if (msg.HasParseError()) {
-			fprintf(stderr, "json test suite file %s has parse error", pack->data);
-			return;
-		}
 		const char * action = msg["action"].GetString();
 		//Value  req(msg["request"], msg.GetAllocator());
 
 
-		fprintf(stderr, "\ndebug:%s:%d\n",__FUNCTION__, __LINE__);
 
 		if(!strcmp(action,"stop")){
 			fprintf(stderr, "\nstop\n");
 			ssound_stop(engine);
 		}else if(!strcmp(action, "start")){
-			//	const char * coreType = msg["request"]["coreType"].GetString();
-			//	const char * refText = msg["request"]["refText"].GetString();
+			const char * coreType = msg["request"]["coreType"].GetString();
+			const char * refText = msg["request"]["refText"].GetString();
 			fprintf(stderr, "\nstart\n");
 			char id[64];
 			Document startP;
+			//startP.SetObject();
 			fprintf(stderr, "\nbefore\n");
 			startP.Parse(start_params_str);
-			startP.RemoveMember("request");
-			startP.AddMember("request", msg["request"], startP.GetAllocator());
 			fprintf(stderr, "\nstart\n");
 			//startP["request"].AddMember("coreType", Value("").SetString(coreType, strlen(coreType)), startP.GetAllocator());
 			//startP["request"].AddMember("refText", Value("").SetString(refText, strlen(refText)), startP.GetAllocator());
 			//startP["request"]["coreType"].SetString(coreType, strlen(coreType));
-			//startP["request"]["refText"].SetString(refText, strlen(refText));
+			startP["request"]["refText"].SetString(refText, strlen(refText));
 			StringBuffer stringbuffer;
 			Writer<StringBuffer> writer(stringbuffer);
 			startP.Accept(writer);
@@ -194,6 +166,7 @@ void handle_pack(pack_t * pack, int fd){
 		ssound_feed(engine, pack->data, pack->data_len);
 	}
 }
+/*
 int initSS(const char * config_path)
 {
 	config= json_load_file(config_path, 0, &error);
@@ -223,28 +196,6 @@ int initSS(const char * config_path)
 	}
 
 
-	/*
-	   const char * start_params_str = json_dumps(start_params, 0);
-	   puts(start_params_str);
-	   user_data_t  user_data;
-	   char id[64], buf[2048];
-	   ssound_start(engine, start_params_str, id, ssound_cb, NULL);
-
-
-	   int bytes = 0;
-	   FILE *	   file = fopen(argv[2], "rb");
-	   while ((bytes = (int)fread(buf, 1, 1024, file))) {
-	   ssound_feed(engine, buf, bytes);
-	   }
-
-	   ssound_stop(engine);
-
-	   sleep(5);
-
-	   ssound_delete(engine);
-	   fclose(file);
-
-	 */
 
 	return 0;
 }
@@ -367,3 +318,4 @@ int   main(int argc, char * argv[]){
 	ev_loop(EV_A_  0);
 	return  NULL;
 }
+*/

@@ -7,15 +7,24 @@ using namespace rapidjson;
 
 int main() {
 	// 1. Parse a JSON string into DOM.
-	const char* json = "{\"project\":\"rapidjson\",\"a\":{\"a\":122,\"b\":\"hello\"}, \"stars\":10}";
-	Document d;
-	d.SetObject();
-	d.Parse(json);
+	const char* bar = "{\"project\":\"rapidjson\",\"a\":{\"bar\":122,\"bbb\":\"hello\"}, \"stars\":10}";
+	const char* foo = "{\"project\":\"rapidjson\",\"a\":{\"foo\":122,\"b\":\"hello\"}, \"stars\":10}";
+	Document  fooD,barD;
+	fooD.Parse(foo);
+	barD.Parse(bar);
 
-	Value foo;
-	foo.SetObject();
-	foo.AddMember("foofoo", 11111, d.GetAllocator());
-	d.AddMember("foo", foo, d.GetAllocator());
+
+
+	//Value::AllocatorType allocator;
+	//Value x(kObjectType);
+
+//	x.AddMember("foo", 9999, x.GetAllocator());
+
+	/*
+	   Value foo;
+	   foo.SetObject();
+	   foo.AddMember("foofoo", 11111, d.GetAllocator());
+	   d.AddMember("foo", foo, d.GetAllocator());
 
 	// 2. Modify it by DOM.
 	Value& s = d["stars"];
@@ -25,14 +34,19 @@ int main() {
 	// 3. Stringify the DOM
 	const char *ccc="cccccccccccc";
 	d.AddMember("abc", Value("").SetString(ccc, 100), d.GetAllocator());
-//	d.AddMember("ccc", ccc, d.GetAllocator());
+	//	d.AddMember("ccc", ccc, d.GetAllocator());
+	 */
+	barD.RemoveMember("a");
+	barD.AddMember("a", fooD["a"],barD.GetAllocator());
 	StringBuffer buffer;
 	Writer<StringBuffer> writer(buffer);
-	d.Accept(writer);
+	barD.Accept(writer);
+//	std::cout << buffer.GetString() << std::endl;
+	//x.RemoveMember("foo");
 
-	std::cout<<d["a"]["a"].GetInt()<<std::endl;
-	std::cout<<d["a"]["b"].GetString()<<std::endl;
-	// Output {"project":"rapidjson","stars":11}
+	//d.AddMember("a", dd["a"], d.GetAllocator());
+	//	dd["request"].Swap(d["request"]);
+	//d.SetObject("ccc", dd["a"], d.GetAllocator());
 	std::cout << buffer.GetString() << std::endl;
 	return 0;
 }
