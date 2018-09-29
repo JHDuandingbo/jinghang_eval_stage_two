@@ -56,19 +56,16 @@ const char * start_params = "\
 	}";
 
 
-static int interrupted;
-void sigint_handler1(int sig)
-{
-	interrupted = 1;
-}
+extern  int interrupted;
 
 	int
 ssound_cb(const void *usrdata,              const char *id, int type,               const void *message, int size)
 {
 
 	time_t to = time(NULL);
-	int fd = *(int *)usrdata;
+	engine_t * eng = (engine_t *)usrdata;
 
+	ws_client_t * ws_client = eng->ws_client;
 
 
 	if (type == SSOUND_MESSAGE_TYPE_JSON)
@@ -135,9 +132,6 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		d.AddMember("errMsg", "", d.GetAllocator());
 		d.AddMember("userId", "guest", d.GetAllocator());
 		d.AddMember("ts", time(NULL), d.GetAllocator());
-		//result.AddMember("scoreProNoAccent", pron,d.GetAllocator());
-		//result.AddMember("scoreProFluency", fluency,d.GetAllocator());
-		//result.AddMember("scoreProStress", stress ,d.GetAllocator());
 		char tmp[BUFSIZ];
 		snprintf(tmp, sizeof(tmp), "%f", pron);
 		result.AddMember("scoreProNoAccent", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
@@ -158,46 +152,56 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		d.Accept(writer);
 		const char * str  = stringbuffer.GetString();
 		//int len = send(fd, str, strlen(str), 0);
-		fprintf(stderr, "write %d bytes to ws\n", len);
+		//fprintf(stderr, "write %d bytes to ws\n", len);
+		strncpy(eng->rsp, str, sizeof(eng->rsp));
+		if(ws_client){
+			lwsl_notice("%s:%d, lws_callback_on_writeable called !\n", __FUNCTION__, __LINE__);
+			lws_callback_on_writable(ws_client->wsi);
+		}else{
+			lwsl_notice("%s:%d, no ws_client attached to this engine!\n", __FUNCTION__, __LINE__);
+		}
 	}
 	return 0;
 }
-
-
 void eval_worker(engine_t *eng)
 {
-
-	signal(SIGINT, sigint_handler1);
 	eng->engine = ssound_new(init_params_str);
+	while(1){
+		ws_client_t * ws_client = eng->ws_client;
 
-	while(true && !interrupted){
-		//contend for ws_client->incomming  
 		std::unique_lock<std::mutex> lock(eng->m);
-		//while(!eng->ws_client ||  !eng->ws_client->incoming_len)
-		while(! eng->ws_client || !eng->ws_client->buflen || ! eng->ws_client->msg_ok ){
-			eng->cv.wait(lock);
+		eng->cv.wait(lock, [eng]{return  interrupted || eng->msg_ok;});
+		if(interrupted){
+			break;
 		}
-		int binary = eng->ws_client->binary;
+		lwsl_notice("%s:%d, worker awaken!\n", __FUNCTION__, __LINE__);
+		int binary = eng->binary;
 		int state = eng->state;
 		if(binary) {
 			if(state == ENG_STATE_STARTED){
-				ssound_feed(eng->engine, eng->ws_client->buffer, eng->ws_client->buflen);
+				ssound_feed(eng->engine, eng->buffer, eng->buflen);
+				lwsl_notice("%s:%d, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, eng->buflen);
 			}else{
-				lwsl_err("current state:%d, got binary data, illegal data", state);
+				lwsl_err("%s:%d, current state:%d, got binary data, illegal data\n", __FUNCTION__, __LINE__, state);
 				//do somthing
 			}
 		}else{
 			Document msg;
-			lwsl_info("eval_worker, handle %s\n", eng->ws_client->buffer);
-			msg.Parse(eng->ws_client->buffer);
+			lwsl_notice("%s:%d, handle <%s>\n", __FUNCTION__, __LINE__, eng->buffer);
+			msg.Parse(eng->buffer);
+			if(msg.HasParseError()){
+				lwsl_err("%s:%d, error while parsing txt\n", __FUNCTION__, __LINE__);
+				fprintf(stderr,"<%s>\n",  eng->buffer);
+			}
 			const char * action = msg["action"].GetString();
 
-			lwsl_info("action:%s\n", action);
+			lwsl_notice("%s:%d, action %s\n", __FUNCTION__, __LINE__, action);
 			if(!strcmp(action,"stop")){
 				fprintf(stderr, "\nstop\n");
 				ssound_stop(eng->engine);
+				eng->state =  ENG_STATE_IDLE;
 			}else if(!strcmp(action, "start")){
-				Document startP;
+				Document start_tpl;
 				start_tpl.Parse(start_params);
 				start_tpl.RemoveMember("request");
 				start_tpl.AddMember("request", msg["request"], start_tpl.GetAllocator());
@@ -209,33 +213,44 @@ void eval_worker(engine_t *eng)
 				fprintf(stderr, "\nstart:%s\n",start_tpl_str);
 				char id[64];
 				ssound_start(eng->engine, start_tpl_str, id, ssound_cb, (void*)eng);
+				eng->state = ENG_STATE_STARTED;
 			}else{
 
 			}
 
 		}
 
+		eng->buflen =0;
+		eng->msg_ok =0;
 		lock.unlock();
-
-		eng->cv.notify_one();
 	}
+	ssound_stop(eng->engine);
 	ssound_delete(eng->engine);
-
-
 }
-void start_engines(){
-	int i=0;
-	for(i=0; i<ENG_N; i++){
+
+
+
+void start_engine_threads(){
+	for(int i=0; i<ENG_N; i++){
 		//engines[i].engine = ssound_new(init_params_str);
 		engines[i].state=ENG_STATE_IDLE;
 		engines[i].ws_client=nullptr;
 		engines[i].t = std::thread(eval_worker, &engines[i]);
 	}
 }
-void wait_engines(){
-	int i=0;
-	for(i=0; i<ENG_N; i++){
-		engines[i].t.join();
+void notify_engine_threads(){
+
+	for(int i=0; i<ENG_N; i++){
+		if(engines[i].t.joinable()){
+			engines[i].cv.notify_all();
+		}
+	}
+}
+void join_engine_threads(){
+	for(int i=0; i<ENG_N; i++){
+		if(engines[i].t.joinable()){
+			engines[i].t.join();
+		}
 	}
 }
 
@@ -249,47 +264,48 @@ void push_to_idle_worker(ws_client_t * ws_client){
 		if(engines[i].state == ENG_STATE_IDLE){
 			ws_client->engine = &(engines[i]);
 			engines[i].ws_client = ws_client;
-
 			engines[i].state = ENG_STATE_OCCUPIED;
 			break;
 		}
 	}
 
 	if(i == ENG_N){
-		lwsl_err("Drop a ws client,work overload");
+		lwsl_err("Drop ws client,engine already  overloaded");
 	}
 
 }
 void handle_message(ws_client_t * ws_client, void * in, int len){
 
-	engine_t * engine =(engine_t *) ws_client->engine;
-	if(!engine){
+	engine_t * eng =(engine_t *) ws_client->engine;
+	if(!eng){
 		lwsl_err("ws not attached to a worker engine\n");
 		return;
 	}
 
-	std::unique_lock<std::mutex> lock(engine->m);
+	std::unique_lock<std::mutex> lock(eng->m);
 
 	struct lws * wsi = ws_client->wsi;
 	const size_t remaining = lws_remaining_packet_payload(wsi);
-	char * pbuf = ws_client->buffer;
-	assert(len + ws_client->buflen <= (sizeof (ws_client->buffer)));
-	memcpy(&pbuf[ws_client->buflen], in, len);
-	ws_client->buflen += len;
-	ws_client->binary = lws_frame_is_binary(wsi);
+	char * pbuf = eng->buffer;
+	assert(len + eng->buflen <= (sizeof (eng->buffer)));
+	memcpy(&pbuf[eng->buflen], in, len);
+	eng->buflen += len;
+	eng->binary = lws_frame_is_binary(wsi);
 
 	if(!remaining && lws_is_final_fragment(wsi)) {
-		ws_client->msg_ok = 1;
-
-		if(!ws_client->binary){
-			fprintf(stderr, "TXT:%s\n", ws_client->buffer);
-			lwsl_notice("TXT:%s\n", ws_client->buffer);
+		eng->msg_ok = 1;
+		if(!eng->binary){
+			//fprintf(stderr, "TXT:%s\n", ws_client->buffer);
+			lwsl_notice("%s:%d msg ok, GOT TXT MSG:%d bytes<%s>\n",__FUNCTION__, __LINE__,  eng->buflen, eng->buffer);
 			//lwsl_info("TXT:%s\n", ws_client->incoming);
 		}else{
-			lwsl_notice("BIN:%d bytes\n", ws_client->buflen);
+			lwsl_notice("%s:%d  msg ok,GOT BIN MSG:%d bytes\n", __FUNCTION__, __LINE__, eng->buflen);
 		}
 	}else{
-		ws_client->msg_ok = 0;
+		eng->msg_ok = 0;
 	}
-	engine->cv.notify_one();
+	lock.unlock();
+	eng->cv.notify_one();
+	lwsl_notice("%s:%d notify worker,got %5d bytes,  msg_ok:%d\n", __FUNCTION__, __LINE__, len, eng->msg_ok);
+
 }

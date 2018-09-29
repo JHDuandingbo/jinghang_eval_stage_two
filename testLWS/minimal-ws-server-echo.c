@@ -2,7 +2,6 @@
 #include <thread>
 #include <libwebsockets.h>
 #include <string.h>
-#include <signal.h>
 #include "protocol_lws_minimal_server_echo.c"
 #include <iostream>
 #include <string.h>
@@ -12,34 +11,38 @@
 
 #define LWS_PLUGIN_STATIC
 extern void handle_message(ws_client_t * ws_client, void * in, int len);
-extern void start_engines();
-extern void wait_engines();
+extern void start_engine_threads();
+extern void join_engine_threads();
+extern void notify_engine_threads();
 
 static struct lws_protocols protocols[] = {
 	LWS_PLUGIN_PROTOCOL_MINIMAL_SERVER_ECHO,
 	{ NULL, NULL, 0, 0 } /* terminator */
 };
 
-static int interrupted, port = 60000, options;
+int interrupted, port = 60000, options;
 
 
 void sigint_handler(int sig)
 {
 	interrupted = 1;
+
+	notify_engine_threads();
 }
 
-int test()
+int lws_worker()
 {
+	std::cout<<"lws_worker pid:"<< std::this_thread::get_id()<<std::endl;
 	struct lws_context_creation_info info;
 	struct lws_context *context;
 	const char *p;
 	int n = 0, logs = LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE |LLL_INFO | LLL_DEBUG
-			/* for LLL_ verbosity above NOTICE to be built into lws,
-			 * lws must have been configured and built with
-			 * -DCMAKE_BUILD_TYPE=DEBUG instead of =RELEASE */
-			/* | LLL_INFO */ /* | LLL_PARSER */ /* | LLL_HEADER */
-			/* | LLL_EXT */ /* | LLL_CLIENT */ /* | LLL_LATENCY */
-			/* | LLL_DEBUG */;
+		/* for LLL_ verbosity above NOTICE to be built into lws,
+		 * lws must have been configured and built with
+		 * -DCMAKE_BUILD_TYPE=DEBUG instead of =RELEASE */
+		/* | LLL_INFO */ /* | LLL_PARSER */ /* | LLL_HEADER */
+		/* | LLL_EXT */ /* | LLL_CLIENT */ /* | LLL_LATENCY */
+		/* | LLL_DEBUG */;
 
 	signal(SIGINT, sigint_handler);
 
@@ -68,14 +71,14 @@ int test()
 
 	return interrupted != 2;
 }
+
 int main(int argc, const char **argv)
 {
-	std::thread t (test);
+	std::thread t (lws_worker);
 
-	start_engines();
+	start_engine_threads();
+	join_engine_threads();
 
-	wait_engines();
 	t.join();
 	puts("after join");
-	
 }
