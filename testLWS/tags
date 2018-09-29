@@ -4,6 +4,10 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ACTION_BINARY	include/eval_types.h	30;"	d
+ACTION_NULL	include/eval_types.h	28;"	d
+ACTION_START	include/eval_types.h	29;"	d
+ACTION_STOP	include/eval_types.h	31;"	d
 ASCII	include/rapidjson/encodings.h	/^struct ASCII {$/;"	s
 AboveMaximum	include/rapidjson/schema.h	/^    void AboveMaximum(double actual, const SValue& expected, bool exclusive) {$/;"	f	class:GenericSchemaValidator
 AboveMaximum	include/rapidjson/schema.h	/^    void AboveMaximum(int64_t actual, const SValue& expected, bool exclusive) {$/;"	f	class:GenericSchemaValidator
@@ -79,6 +83,7 @@ AutoUTFInputStream	include/rapidjson/encodedstream.h	/^    AutoUTFInputStream(In
 AutoUTFInputStream	include/rapidjson/encodedstream.h	/^class AutoUTFInputStream {$/;"	c
 AutoUTFOutputStream	include/rapidjson/encodedstream.h	/^    AutoUTFOutputStream(OutputByteStream& os, UTFType type, bool putBOM) : os_(&os), type_(type) {$/;"	f	class:AutoUTFOutputStream
 AutoUTFOutputStream	include/rapidjson/encodedstream.h	/^class AutoUTFOutputStream {$/;"	c
+BATCH_SIZE	handle_message.cpp	26;"	d	file:
 Base	include/rapidjson/prettywriter.h	/^    typedef Writer<OutputStream, SourceEncoding, TargetEncoding, StackAllocator, writeFlags> Base;$/;"	t	class:PrettyWriter
 Base	include/rapidjson/reader.h	/^        typedef NumberStream<InputStream, false, false> Base;$/;"	t	class:GenericReader::NumberStream
 Base	include/rapidjson/reader.h	/^        typedef NumberStream<InputStream, true, false> Base;$/;"	t	class:GenericReader::NumberStream
@@ -271,11 +276,10 @@ Double	include/rapidjson/schema.h	/^    bool Double(double d)   { RAPIDJSON_SCHE
 Double	include/rapidjson/schema.h	/^    bool Double(double d) { $/;"	f	class:internal::Hasher
 Double	include/rapidjson/writer.h	/^    bool Double(double d)       { Prefix(kNumberType); return EndValue(WriteDouble(d)); }$/;"	f	class:Writer
 DuplicateItems	include/rapidjson/schema.h	/^    void DuplicateItems(SizeType index1, SizeType index2) {$/;"	f	class:GenericSchemaValidator
-ENG_N	include/eval_types.h	21;"	d
-ENG_STATE_IDLE	include/eval_types.h	22;"	d
-ENG_STATE_OCCUPIED	include/eval_types.h	23;"	d
-ENG_STATE_STARTED	include/eval_types.h	24;"	d
-ENG_STATE_STOPPED	include/eval_types.h	25;"	d
+ENG_N	include/eval_types.h	23;"	d
+ENG_STATE_IDLE	include/eval_types.h	24;"	d
+ENG_STATE_OCCUPIED	include/eval_types.h	25;"	d
+ENG_STATE_STARTED	include/eval_types.h	26;"	d
 EXTARG_DEC	include/libwebsockets/lws-ws-ext.h	/^	EXTARG_DEC,  \/**< requires a decimal argument *\/$/;"	e	enum:lws_ext_options_types
 EXTARG_NONE	include/libwebsockets/lws-ws-ext.h	/^	EXTARG_NONE, \/**< does not take an argument *\/$/;"	e	enum:lws_ext_options_types
 EXTARG_OPT_DEC	include/libwebsockets/lws-ws-ext.h	/^	EXTARG_OPT_DEC \/**< may have an optional decimal argument *\/$/;"	e	enum:lws_ext_options_types
@@ -1137,6 +1141,7 @@ LWS_CUS_REG	include/libwebsockets/lws-callbacks.h	/^	LWS_CUS_REG,$/;"	e	enum:lws
 LWS_CUS_REQ	include/libwebsockets/lws-callbacks.h	/^	LWS_CUS_REQ,$/;"	e	enum:lws_cert_update_state
 LWS_CUS_STARTING	include/libwebsockets/lws-callbacks.h	/^	LWS_CUS_STARTING,$/;"	e	enum:lws_cert_update_state
 LWS_CUS_SUCCESS	include/libwebsockets/lws-callbacks.h	/^	LWS_CUS_SUCCESS,$/;"	e	enum:lws_cert_update_state
+LWS_DLL	protocol_lws_minimal_server_echo.c	14;"	d	file:
 LWS_EXTERN	include/libwebsockets.h	171;"	d
 LWS_EXTERN	include/libwebsockets.h	78;"	d
 LWS_EXTERN	include/libwebsockets.h	80;"	d
@@ -1207,6 +1212,7 @@ LWS_ILLEGAL_HTTP_CONTENT_LEN	include/libwebsockets/lws-http.h	526;"	d
 LWS_INLINE	include/libwebsockets.h	108;"	d
 LWS_INLINE	include/libwebsockets.h	69;"	d
 LWS_INSTALL_DATADIR	include/lws_config.h	9;"	d
+LWS_INTERNAL	protocol_lws_minimal_server_echo.c	15;"	d	file:
 LWS_INVALID_FILE	include/libwebsockets.h	117;"	d
 LWS_INVALID_FILE	include/libwebsockets.h	121;"	d
 LWS_INVALID_FILE	include/libwebsockets.h	123;"	d
@@ -1237,9 +1243,11 @@ LWS_O_TRUNC	include/libwebsockets.h	91;"	d
 LWS_O_WRONLY	include/libwebsockets.h	110;"	d
 LWS_O_WRONLY	include/libwebsockets.h	89;"	d
 LWS_PLUGIN_API_MAGIC	include/libwebsockets/lws-protocols-plugins.h	199;"	d
-LWS_PLUGIN_PROTOCOL_MINIMAL	protocol_lws_minimal.c	157;"	d	file:
+LWS_PLUGIN_PROTOCOL_MINIMAL	junk/protocol_lws_minimal.c	165;"	d	file:
+LWS_PLUGIN_PROTOCOL_MINIMAL_SERVER_ECHO	protocol_lws_minimal_server_echo.c	107;"	d	file:
 LWS_PLUGIN_STATIC	include/libwebsockets/lws-esp32.h	107;"	d
-LWS_PLUGIN_STATIC	minimal-ws-server.c	21;"	d	file:
+LWS_PLUGIN_STATIC	junk/minimal-ws-server.c	21;"	d	file:
+LWS_PLUGIN_STATIC	minimal-ws-server-echo.c	12;"	d	file:
 LWS_PLUGIN_STATIC	test_main.cpp	23;"	d	file:
 LWS_POLLHUP	include/libwebsockets.h	321;"	d
 LWS_POLLHUP	include/libwebsockets.h	335;"	d
@@ -2631,7 +2639,8 @@ _WSI_TOKEN_CLIENT_PEER_ADDRESS	include/libwebsockets/lws-http.h	/^	_WSI_TOKEN_CL
 _WSI_TOKEN_CLIENT_SENT_PROTOCOLS	include/libwebsockets/lws-http.h	/^	_WSI_TOKEN_CLIENT_SENT_PROTOCOLS,$/;"	e	enum:lws_token_indexes
 _WSI_TOKEN_CLIENT_URI	include/libwebsockets/lws-http.h	/^	_WSI_TOKEN_CLIENT_URI,$/;"	e	enum:lws_token_indexes
 __func__	include/libwebsockets.h	94;"	d
-__minimal_destroy_message	protocol_lws_minimal.c	/^__minimal_destroy_message(void *_msg)$/;"	f	file:
+__minimal_destroy_message	junk/protocol_lws_minimal.c	/^__minimal_destroy_message(void *_msg)$/;"	f	file:
+__minimal_destroy_message	protocol_lws_minimal_server_echo.c	/^__minimal_destroy_message(void *_msg)$/;"	f	file:
 _engine_t	include/eval_types.h	/^typedef struct _engine_t{$/;"	s
 _lejp_stack	include/libwebsockets/lws-lejp.h	/^struct _lejp_stack {$/;"	s
 _unused	include/libwebsockets/lws-client.h	/^	void *_unused[4]; \/**< dummy *\/$/;"	m	struct:lws_client_connect_info
@@ -2640,6 +2649,7 @@ _unused	include/libwebsockets/lws-context-vhost.h	/^	void *_unused[4]; \/**< dum
 a	include/rapidjson/document.h	/^        ArrayData a;$/;"	m	union:GenericValue::Data
 access_pw	include/libwebsockets/lws-esp32.h	/^	char access_pw[16];$/;"	m	struct:lws_esp32
 acme	include/libwebsockets/lws-esp32.h	/^	char acme;$/;"	m	struct:lws_esp32
+action	include/eval_types.h	/^	int action;\/\/0:start, 1:binary,2:stop$/;"	m	struct:_engine_t
 active_ssid	include/libwebsockets/lws-esp32.h	/^	char active_ssid[64];$/;"	m	struct:lws_esp32
 additionalItemsSchema_	include/rapidjson/schema.h	/^    const SchemaType* additionalItemsSchema_;$/;"	m	class:internal::Schema
 additionalItems_	include/rapidjson/schema.h	/^    bool additionalItems_;$/;"	m	class:internal::Schema
@@ -2658,7 +2668,7 @@ allocator_	include/rapidjson/schema.h	/^    AllocatorType* allocator_;$/;"	m	cla
 allocator_	include/rapidjson/schema.h	/^    StackAllocator allocator_;$/;"	m	class:SchemaValidatingReader
 alpn	include/libwebsockets/lws-client.h	/^	const char *alpn;$/;"	m	struct:lws_client_connect_info
 alpn	include/libwebsockets/lws-context-vhost.h	/^	const char *alpn;$/;"	m	struct:lws_context_creation_info
-amsg	protocol_lws_minimal.c	/^	struct msg amsg; \/* the one pending message... *\/$/;"	m	struct:per_vhost_data__minimal	typeref:struct:per_vhost_data__minimal::msg	file:
+amsg	junk/protocol_lws_minimal.c	/^	struct msg amsg; \/* the one pending message... *\/$/;"	m	struct:per_vhost_data__minimal	typeref:struct:per_vhost_data__minimal::msg	file:
 anchorBegin_	include/rapidjson/internal/regex.h	/^    bool anchorBegin_;$/;"	m	class:internal::GenericRegex
 anchorEnd_	include/rapidjson/internal/regex.h	/^    bool anchorEnd_;$/;"	m	class:internal::GenericRegex
 anyOf_	include/rapidjson/schema.h	/^    SchemaArray anyOf_;$/;"	m	class:internal::Schema
@@ -2676,21 +2686,19 @@ begin	include/rapidjson/document.h	/^    ValueIterator begin() const { return va
 begin	include/rapidjson/schema.h	/^        SizeType begin; \/\/ begin index of context.validators$/;"	m	struct:internal::Schema::SchemaArray
 begin_	include/rapidjson/memorystream.h	/^    const Ch* begin_;   \/\/!< Original head of the string.$/;"	m	struct:MemoryStream
 bin	include/libwebsockets/lws-plugin-generic-sessions.h	/^typedef struct { unsigned char bin[20]; \/**< binary representation of hash *\/} lwsgw_hash_bin;$/;"	m	struct:__anon11
-binary	include/eval_types.h	/^	int binary;$/;"	m	struct:websockets_client
+binary	include/eval_types.h	/^	int binary;$/;"	m	struct:_engine_t
 bind_iface	include/libwebsockets/lws-context-vhost.h	/^	int bind_iface;$/;"	m	struct:lws_context_creation_info
 bssid	include/libwebsockets/lws-misc.h	/^	uint8_t bssid[6];$/;"	m	struct:lws_wifi_scan
 buf	include/libwebsockets/lws-genrsa.h	/^	uint8_t *buf;$/;"	m	struct:lws_genrsa_element
 buf	include/libwebsockets/lws-lejp.h	/^	char buf[LEJP_STRING_CHUNK + 1];$/;"	m	struct:lejp_ctx
 buf	include/libwebsockets/lws-write.h	/^	unsigned char *buf;$/;"	m	struct:lws_write_passthru
-buffer	include/eval_types.h	/^	char buffer[512*BUFSIZ];$/;"	m	struct:websockets_client
-buffer	include/eval_types.h	/^	char buffer[BUFSIZ*512];$/;"	m	struct:_engine_t
+buffer	include/eval_types.h	/^	char buffer[20*BUFSIZ];$/;"	m	struct:_engine_t
 bufferEnd_	include/rapidjson/filewritestream.h	/^    char *bufferEnd_;$/;"	m	class:FileWriteStream
 bufferLast_	include/rapidjson/filereadstream.h	/^    Ch *bufferLast_;$/;"	m	class:FileReadStream
 bufferSize_	include/rapidjson/filereadstream.h	/^    size_t bufferSize_;$/;"	m	class:FileReadStream
 buffer_	include/rapidjson/filereadstream.h	/^    Ch *buffer_;$/;"	m	class:FileReadStream
 buffer_	include/rapidjson/filewritestream.h	/^    char *buffer_;$/;"	m	class:FileWriteStream
-buflen	include/eval_types.h	/^	int  buflen;$/;"	m	struct:websockets_client
-buflen	include/eval_types.h	/^	int buflen;$/;"	m	struct:_engine_t
+buflen	include/eval_types.h	/^	int  buflen;$/;"	m	struct:_engine_t
 button_is_down	include/libwebsockets/lws-esp32.h	/^	volatile char button_is_down;$/;"	m	struct:lws_esp32
 cIterativeParsingStateCount	include/rapidjson/reader.h	/^        cIterativeParsingStateCount$/;"	e	enum:GenericReader::IterativeParsingState
 cache_intermediaries	include/libwebsockets/lws-context-vhost.h	/^	unsigned int cache_intermediaries:1; \/**< set if intermediaries are allowed to cache *\/$/;"	m	struct:lws_http_mount
@@ -2700,7 +2708,8 @@ cache_revalidate	include/libwebsockets/lws-context-vhost.h	/^	unsigned int cache
 callback	include/libwebsockets/lws-lejp.h	/^	signed char (*callback)(struct lejp_ctx *ctx, char reason);$/;"	m	struct:lejp_ctx
 callback	include/libwebsockets/lws-protocols-plugins.h	/^	lws_callback_function *callback;$/;"	m	struct:lws_protocols
 callback	include/libwebsockets/lws-ws-ext.h	/^	lws_extension_callback_function *callback; \/**< Service callback *\/$/;"	m	struct:lws_extension
-callback_minimal	protocol_lws_minimal.c	/^callback_minimal(struct lws *wsi, enum lws_callback_reasons reason,$/;"	f	file:
+callback_minimal	junk/protocol_lws_minimal.c	/^callback_minimal(struct lws *wsi, enum lws_callback_reasons reason,$/;"	f	file:
+callback_minimal_server_echo	protocol_lws_minimal_server_echo.c	/^callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,$/;"	f	file:
 capacity	include/rapidjson/allocators.h	/^        size_t capacity;    \/\/!< Capacity of the chunk in bytes (excluding the header itself).$/;"	m	struct:MemoryPoolAllocator::ChunkHeader
 capacity	include/rapidjson/document.h	/^        SizeType capacity;$/;"	m	struct:GenericValue::ArrayData
 capacity	include/rapidjson/document.h	/^        SizeType capacity;$/;"	m	struct:GenericValue::ObjectData
@@ -2732,7 +2741,7 @@ column	include/jansson.h	/^    int column;$/;"	m	struct:json_error_t
 conn_ap	include/libwebsockets/lws-esp32.h	/^	char conn_ap;$/;"	m	struct:lws_esp32
 content	include/libwebsockets/lws-misc.h	/^	char *content; \/**< private *\/$/;"	m	struct:lws_email
 context	include/libwebsockets/lws-client.h	/^	struct lws_context *context;$/;"	m	struct:lws_client_connect_info	typeref:struct:lws_client_connect_info::lws_context
-context	protocol_lws_minimal.c	/^	struct lws_context *context;$/;"	m	struct:per_vhost_data__minimal	typeref:struct:per_vhost_data__minimal::lws_context	file:
+context	junk/protocol_lws_minimal.c	/^	struct lws_context *context;$/;"	m	struct:per_vhost_data__minimal	typeref:struct:per_vhost_data__minimal::lws_context	file:
 copyOptimization	include/rapidjson/stream.h	/^    enum { copyOptimization = 0 };$/;"	e	enum:StreamTraits::__anon20
 copyOptimization	include/rapidjson/stream.h	/^    enum { copyOptimization = 1 };$/;"	e	enum:StreamTraits::__anon21
 copyOptimization	include/rapidjson/stream.h	/^    enum { copyOptimization = 1 };$/;"	e	enum:StreamTraits::__anon22
@@ -2750,7 +2759,7 @@ count_vars	include/libwebsockets/lws-http.h	/^	int count_vars; \/**< count of va
 ctx	include/libwebsockets/lws-genhash.h	/^	mbedtls_md_context_t ctx;$/;"	m	struct:lws_genhmac_ctx
 ctx	include/libwebsockets/lws-genhash.h	/^        EVP_MD_CTX *ctx;$/;"	m	struct:lws_genhmac_ctx
 ctx	include/libwebsockets/lws-genrsa.h	/^	mbedtls_rsa_context *ctx;$/;"	m	struct:lws_genrsa_ctx
-current	protocol_lws_minimal.c	/^	int current; \/* the current message number we are caching *\/$/;"	m	struct:per_vhost_data__minimal	file:
+current	junk/protocol_lws_minimal.c	/^	int current; \/* the current message number we are caching *\/$/;"	m	struct:per_vhost_data__minimal	file:
 currentError_	include/rapidjson/schema.h	/^    ValueType currentError_;$/;"	m	class:GenericSchemaValidator
 current_	include/rapidjson/encodedstream.h	/^    Ch current_;$/;"	m	class:AutoUTFInputStream
 current_	include/rapidjson/encodedstream.h	/^    Ch current_;$/;"	m	class:EncodedInputStream
@@ -2788,7 +2797,7 @@ dependencies	include/rapidjson/schema.h	/^        bool* dependencies;$/;"	m	stru
 dependenciesSchema	include/rapidjson/schema.h	/^        const SchemaType* dependenciesSchema;$/;"	m	struct:internal::Schema::Property
 dependenciesValidatorIndex	include/rapidjson/schema.h	/^        SizeType dependenciesValidatorIndex;$/;"	m	struct:internal::Schema::Property
 depth_	include/rapidjson/schema.h	/^    unsigned depth_;$/;"	m	class:GenericSchemaValidator
-destroy_protocol_minimal	protocol_lws_minimal.c	/^destroy_protocol_minimal(struct lws_context *context)$/;"	f
+destroy_protocol_minimal	junk/protocol_lws_minimal.c	/^destroy_protocol_minimal(struct lws_context *context)$/;"	f
 difference_type	include/rapidjson/document.h	/^    typedef std::ptrdiff_t difference_type;$/;"	t	class:GenericMemberIterator
 digits_	include/rapidjson/internal/biginteger.h	/^    Type digits_[kCapacity];$/;"	m	class:internal::BigInteger
 documentStack_	include/rapidjson/schema.h	/^    internal::Stack<StateAllocator> documentStack_;  \/\/!< stack to store the current path of validating document (Ch)$/;"	m	class:GenericSchemaValidator
@@ -2817,8 +2826,8 @@ end	include/rapidjson/document.h	/^    ValueIterator end() const { return value_
 end	include/rapidjson/internal/regex.h	/^        unsigned end;$/;"	m	struct:internal::GenericRegex::Range
 end_	include/rapidjson/memorystream.h	/^    const Ch* end_;     \/\/!< End of stream.$/;"	m	struct:MemoryStream
 end_	include/rapidjson/pointer.h	/^        const Ch* end_;     \/\/!< Past-the-end position.$/;"	m	class:GenericPointer::PercentDecodeStream
-engine	include/eval_types.h	/^	 void * engine;$/;"	m	struct:websockets_client
 engine	include/eval_types.h	/^	struct ssound * engine;$/;"	m	struct:_engine_t	typeref:struct:_engine_t::ssound
+engine	include/eval_types.h	/^	void * engine;$/;"	m	struct:websockets_client
 engine	ssound_main.cpp	/^static struct ssound * engine = NULL;$/;"	v	typeref:struct:ssound	file:
 engine_t	include/eval_types.h	/^}engine_t;$/;"	t	typeref:struct:_engine_t
 enumCount_	include/rapidjson/schema.h	/^    SizeType enumCount_;$/;"	m	class:internal::Schema
@@ -2847,7 +2856,6 @@ extra_mimetypes	include/libwebsockets/lws-context-vhost.h	/^	const struct lws_pr
 f	include/libwebsockets/lws-lejp.h	/^	uint8_t f;$/;"	m	struct:lejp_ctx
 f	include/rapidjson/document.h	/^        Flag f;$/;"	m	union:GenericValue::Data
 f	include/rapidjson/internal/diyfp.h	/^    uint64_t f;$/;"	m	struct:internal::DiyFp
-f1	foo.cpp	/^void f1(double ret) {$/;"	f
 factory	include/rapidjson/schema.h	/^    SchemaValidatorFactoryType& factory;$/;"	m	struct:internal::SchemaValidationContext
 fd	include/libwebsockets.h	/^	lws_sockfd_type fd;	\/**< applicable socket descriptor *\/$/;"	m	struct:lws_pollargs
 fd	include/libwebsockets.h	/^	lws_sockfd_type fd; \/**< file descriptor *\/$/;"	m	struct:lws_pollfd
@@ -2879,7 +2887,7 @@ gid	include/libwebsockets/lws-context-vhost.h	/^	int gid;$/;"	m	struct:lws_conte
 go	bar.cpp	/^void go() {$/;"	f
 go	test.cpp	/^void go() {$/;"	f
 group	include/libwebsockets/lws-esp32.h	/^	char group[16];$/;"	m	struct:lws_esp32
-handle_message	handle_message.cpp	/^void handle_message(ws_client_t * ws_client, void * in, int len){$/;"	f
+handle_message	handle_message.cpp	/^int handle_message(ws_client_t * ws_client, void * in, int len){$/;"	f
 handle_message	ssound_main.cpp	/^void handle_message(ws_client_t * ws_client){$/;"	f
 hasBOM_	include/rapidjson/encodedstream.h	/^    bool hasBOM_;$/;"	m	class:AutoUTFInputStream
 hasDependencies_	include/rapidjson/schema.h	/^    bool hasDependencies_;$/;"	m	class:internal::Schema
@@ -2927,7 +2935,7 @@ indentChar_	include/rapidjson/prettywriter.h	/^    Ch indentChar_;$/;"	m	class:P
 index	include/rapidjson/pointer.h	/^        SizeType index;             \/\/!< A valid array index, if it is not equal to kPointerInvalidIndex.$/;"	m	struct:GenericPointer::Token
 inet	include/libwebsockets/lws-esp32.h	/^       	char inet;$/;"	m	struct:lws_esp32
 init_params_str	handle_message.cpp	/^const char * init_params_str="{\\$/;"	v
-init_protocol_minimal	protocol_lws_minimal.c	/^init_protocol_minimal(struct lws_context *context,$/;"	f
+init_protocol_minimal	junk/protocol_lws_minimal.c	/^init_protocol_minimal(struct lws_context *context,$/;"	f
 initialCapacity_	include/rapidjson/internal/stack.h	/^    size_t initialCapacity_;$/;"	m	class:internal::Stack
 int16_t	include/rapidjson/msinttypes/stdint.h	/^   typedef signed __int16    int16_t;$/;"	t
 int16_t	include/rapidjson/msinttypes/stdint.h	/^   typedef signed short      int16_t;$/;"	t
@@ -2960,7 +2968,8 @@ internal	include/rapidjson/internal/swap.h	/^namespace internal {$/;"	n
 internal	include/rapidjson/reader.h	/^namespace internal {$/;"	n
 internal	include/rapidjson/schema.h	/^namespace internal {$/;"	n
 interpret	include/libwebsockets/lws-context-vhost.h	/^	const struct lws_protocol_vhost_options *interpret;$/;"	m	struct:lws_http_mount	typeref:struct:lws_http_mount::lws_protocol_vhost_options
-interrupted	minimal-ws-server.c	/^static int interrupted;$/;"	v	file:
+interrupted	junk/minimal-ws-server.c	/^static int interrupted;$/;"	v	file:
+interrupted	minimal-ws-server-echo.c	/^int interrupted, port = 60000, options;$/;"	v
 interrupted	test_main.cpp	/^static int interrupted;$/;"	v	file:
 intmax_t	include/rapidjson/msinttypes/stdint.h	/^typedef int64_t   intmax_t;$/;"	t
 intptr_t	include/rapidjson/msinttypes/stdint.h	/^   typedef _W64 signed int   intptr_t;$/;"	t
@@ -2984,6 +2993,7 @@ itemsList_	include/rapidjson/schema.h	/^    const SchemaType* itemsList_;$/;"	m	
 itemsTupleCount_	include/rapidjson/schema.h	/^    SizeType itemsTupleCount_;$/;"	m	class:internal::Schema
 itemsTuple_	include/rapidjson/schema.h	/^    const SchemaType** itemsTuple_;$/;"	m	class:internal::Schema
 iterator_category	include/rapidjson/document.h	/^    typedef std::random_access_iterator_tag iterator_category;$/;"	t	class:GenericMemberIterator
+join_engine_threads	handle_message.cpp	/^void join_engine_threads(){$/;"	f
 json	include/libwebsockets/lws-esp32.h	/^	uint32_t json;$/;"	m	struct:lws_esp32_image
 json_array_append	include/jansson.h	/^int json_array_append(json_t *array, json_t *value)$/;"	f
 json_array_foreach	include/jansson.h	216;"	d
@@ -3186,7 +3196,7 @@ ka_time	include/libwebsockets/lws-context-vhost.h	/^	int ka_time;$/;"	m	struct:l
 keepalive_timeout	include/libwebsockets/lws-context-vhost.h	/^	int keepalive_timeout;$/;"	m	struct:lws_context_creation_info
 keytype	include/libwebsockets/lws-jwk.h	/^	char keytype[5];		\/**< "oct" or "RSA" *\/$/;"	m	struct:lws_jwk
 l	include/libwebsockets/lws-protocols-plugins.h	/^	void *l; \/**< so we can compile on ancient libuv *\/$/;"	m	struct:lws_plugin
-last	protocol_lws_minimal.c	/^	int last; \/* the last message number we sent *\/$/;"	m	struct:per_session_data__minimal	file:
+last	junk/protocol_lws_minimal.c	/^	int last; \/* the last message number we sent *\/$/;"	m	struct:per_session_data__minimal	file:
 last_seen	include/libwebsockets/lws-esp32.h	/^	uint64_t last_seen;$/;"	m	struct:lws_group_member
 le_dns	include/libwebsockets/lws-esp32.h	/^	char le_dns[64];$/;"	m	struct:lws_esp32
 le_email	include/libwebsockets/lws-esp32.h	/^	char le_email[64];$/;"	m	struct:lws_esp32
@@ -3204,7 +3214,7 @@ len	include/libwebsockets/lws-vfs.h	/^	uint8_t len;		\/* length of above string 
 len	include/libwebsockets/lws-write.h	/^	size_t len;$/;"	m	struct:lws_write_passthru
 len	include/libwebsockets/lws-ws-ext.h	/^	int len; \/**< length of value *\/$/;"	m	struct:lws_ext_option_arg
 len	include/libwebsockets/lws-x509.h	/^		int len;$/;"	m	struct:lws_tls_cert_info_results::__anon6
-len	protocol_lws_minimal.c	/^	size_t len;$/;"	m	struct:msg	file:
+len	junk/protocol_lws_minimal.c	/^	size_t len;$/;"	m	struct:msg	file:
 length	include/rapidjson/document.h	/^        SizeType length;$/;"	m	struct:GenericValue::String
 length	include/rapidjson/document.h	/^    const SizeType length; \/\/!< length of the string (excluding the trailing NULL terminator)$/;"	m	struct:GenericStringRef
 length	include/rapidjson/pointer.h	/^        SizeType length;            \/\/!< Length of the name.$/;"	m	struct:GenericPointer::Token
@@ -3346,6 +3356,7 @@ lws_vfs_file_read	include/libwebsockets/lws-vfs.h	/^lws_vfs_file_read(lws_fop_fd
 lws_vfs_file_seek_cur	include/libwebsockets/lws-vfs.h	/^lws_vfs_file_seek_cur(lws_fop_fd_t fop_fd, lws_fileofs_t offset)$/;"	f
 lws_vfs_file_write	include/libwebsockets/lws-vfs.h	/^lws_vfs_file_write(lws_fop_fd_t fop_fd, lws_filepos_t *amount,$/;"	f
 lws_wifi_scan	include/libwebsockets/lws-misc.h	/^struct lws_wifi_scan { \/* generic wlan scan item *\/$/;"	s
+lws_worker	minimal-ws-server-echo.c	/^int lws_worker()$/;"	f
 lws_worker	test_main.cpp	/^int lws_worker()$/;"	f
 lws_write_http	include/libwebsockets/lws-write.h	212;"	d
 lws_write_passthru	include/libwebsockets/lws-write.h	/^struct lws_write_passthru {$/;"	s
@@ -3388,8 +3399,9 @@ m	include/eval_types.h	/^	std::mutex m;$/;"	m	struct:_engine_t
 mac	include/libwebsockets/lws-esp32.h	/^	char mac[20];$/;"	m	struct:lws_esp32
 mac	include/libwebsockets/lws-esp32.h	/^	char mac[20];$/;"	m	struct:lws_group_member
 main	bar.cpp	/^int main ()$/;"	f
-main	foo.cpp	/^int main() {$/;"	f
-main	minimal-ws-server.c	/^int main(int argc, const char **argv)$/;"	f
+main	foo.c	/^int main(){$/;"	f
+main	junk/minimal-ws-server.c	/^int main(int argc, const char **argv)$/;"	f
+main	minimal-ws-server-echo.c	/^int main(int argc, const char **argv)$/;"	f
 main	test.cpp	/^int main ()$/;"	f
 main	test_main.cpp	/^int main(int argc, const char **argv)$/;"	f
 mask	include/libwebsockets/lws-plugin-generic-sessions.h	/^	unsigned int mask; \/**< access rights mask associated with session$/;"	m	struct:lws_session_info
@@ -3417,14 +3429,13 @@ missingDependents_	include/rapidjson/schema.h	/^    ValueType missingDependents_
 mod_time	include/libwebsockets/lws-vfs.h	/^	uint32_t			mod_time;$/;"	m	struct:lws_fop_fd
 model	include/libwebsockets/lws-esp32.h	/^	char model[16];$/;"	m	struct:lws_esp32
 model	include/libwebsockets/lws-esp32.h	/^	char model[16];$/;"	m	struct:lws_group_member
-mount	minimal-ws-server.c	/^static const struct lws_http_mount mount = {$/;"	v	typeref:struct:lws_http_mount	file:
+mount	junk/minimal-ws-server.c	/^static const struct lws_http_mount mount = {$/;"	v	typeref:struct:lws_http_mount	file:
 mount_next	include/libwebsockets/lws-context-vhost.h	/^	const struct lws_http_mount *mount_next;$/;"	m	struct:lws_http_mount	typeref:struct:lws_http_mount::lws_http_mount
 mountpoint	include/libwebsockets/lws-context-vhost.h	/^	const char *mountpoint;$/;"	m	struct:lws_http_mount
 mountpoint_len	include/libwebsockets/lws-context-vhost.h	/^	unsigned char mountpoint_len; \/**< length of mountpoint string *\/$/;"	m	struct:lws_http_mount
 mounts	include/libwebsockets/lws-context-vhost.h	/^	const struct lws_http_mount *mounts;$/;"	m	struct:lws_context_creation_info	typeref:struct:lws_context_creation_info::lws_http_mount
 move	include/rapidjson/schema.h	/^        uri_(std::move(rhs.uri_))$/;"	f	class:GenericSchemaDocument
-msg	protocol_lws_minimal.c	/^struct msg {$/;"	s	file:
-msg_ok	include/eval_types.h	/^	int msg_ok;$/;"	m	struct:websockets_client
+msg	junk/protocol_lws_minimal.c	/^struct msg {$/;"	s	file:
 mtx	bar.cpp	/^std::mutex mtx;$/;"	v
 mtx	test.cpp	/^std::mutex mtx;$/;"	v
 multipleOf_	include/rapidjson/schema.h	/^    SValue multipleOf_;$/;"	m	class:internal::Schema
@@ -3450,6 +3461,7 @@ next	include/rapidjson/allocators.h	/^        ChunkHeader *next;  \/\/!< Next ch
 next	include/rapidjson/internal/regex.h	/^        SizeType next;$/;"	m	struct:internal::GenericRegex::Range
 notValidatorIndex_	include/rapidjson/schema.h	/^    SizeType notValidatorIndex_;$/;"	m	class:internal::Schema
 not_	include/rapidjson/schema.h	/^    const SchemaType* not_;$/;"	m	class:internal::Schema
+notify_engine_threads	handle_message.cpp	/^void notify_engine_threads(){$/;"	f
 npos	include/libwebsockets/lws-lejp.h	/^	uint8_t npos;$/;"	m	struct:lejp_ctx
 ns	include/libwebsockets/lws-x509.h	/^	} ns;$/;"	m	union:lws_tls_cert_info_results	typeref:struct:lws_tls_cert_info_results::__anon6
 num_flags	include/libwebsockets/lws-lejp.h	/^enum num_flags {$/;"	g
@@ -3532,6 +3544,7 @@ option_index	include/libwebsockets/lws-ws-ext.h	/^	int option_index; \/**< argum
 option_name	include/libwebsockets/lws-ws-ext.h	/^	const char *option_name; \/**< may be NULL, option_index used then *\/$/;"	m	struct:lws_ext_option_arg
 options	include/libwebsockets/lws-context-vhost.h	/^	const struct lws_protocol_vhost_options *options; \/**< child linked-list of more options for this node *\/$/;"	m	struct:lws_protocol_vhost_options	typeref:struct:lws_protocol_vhost_options::lws_protocol_vhost_options
 options	include/libwebsockets/lws-context-vhost.h	/^	unsigned int options;$/;"	m	struct:lws_context_creation_info
+options	minimal-ws-server-echo.c	/^int interrupted, port = 60000, options;$/;"	v
 opts	include/libwebsockets/lws-esp32.h	/^	char opts[16];$/;"	m	struct:lws_esp32
 origin	include/libwebsockets/lws-client.h	/^	const char *origin;$/;"	m	struct:lws_client_connect_info
 origin	include/libwebsockets/lws-context-vhost.h	/^	const char *origin;$/;"	m	struct:lws_http_mount
@@ -3579,14 +3592,13 @@ patternProperties_	include/rapidjson/schema.h	/^    PatternProperty* patternProp
 patternPropertyCount_	include/rapidjson/schema.h	/^    SizeType patternPropertyCount_;$/;"	m	class:internal::Schema
 pattern_	include/rapidjson/schema.h	/^    RegexType* pattern_;$/;"	m	class:internal::Schema
 payload	include/rapidjson/document.h	/^        char payload[sizeof(SizeType) * 2 + 6];     \/\/ 2 x SizeType + lower 48-bit pointer$/;"	m	struct:GenericValue::Flag
-payload	protocol_lws_minimal.c	/^	void *payload; \/* is malloc'd *\/$/;"	m	struct:msg	file:
+payload	junk/protocol_lws_minimal.c	/^	void *payload; \/* is malloc'd *\/$/;"	m	struct:msg	file:
 pcontext	include/libwebsockets/lws-context-vhost.h	/^	struct lws_context **pcontext;$/;"	m	struct:lws_context_creation_info	typeref:struct:lws_context_creation_info::lws_context
 peekBuffer_	include/rapidjson/istreamwrapper.h	/^    mutable Ch peekBuffer_[4];$/;"	m	class:BasicIStreamWrapper
 pending_timeout	include/libwebsockets/lws-timeout-timer.h	/^enum pending_timeout {$/;"	g
-per_session_data__minimal	protocol_lws_minimal.c	/^struct per_session_data__minimal {$/;"	s	file:
+per_session_data__minimal	junk/protocol_lws_minimal.c	/^struct per_session_data__minimal {$/;"	s	file:
 per_session_data_size	include/libwebsockets/lws-protocols-plugins.h	/^	size_t per_session_data_size;$/;"	m	struct:lws_protocols
-per_vhost_data__minimal	protocol_lws_minimal.c	/^struct per_vhost_data__minimal {$/;"	s	file:
-pid	include/eval_types.h	/^	pid_t pid;$/;"	m	struct:_engine_t
+per_vhost_data__minimal	junk/protocol_lws_minimal.c	/^struct per_vhost_data__minimal {$/;"	s	file:
 plugin_dirs	include/libwebsockets/lws-context-vhost.h	/^	const char * const *plugin_dirs;$/;"	m	struct:lws_context_creation_info
 pointer	include/rapidjson/document.h	/^    typedef ValueType *    pointer;$/;"	t	class:GenericMemberIterator
 pointer	include/rapidjson/schema.h	/^        PointerType pointer;$/;"	m	struct:GenericSchemaDocument::SchemaEntry
@@ -3594,6 +3606,7 @@ pointer_	include/rapidjson/schema.h	/^    PointerType pointer_;$/;"	m	class:inte
 pollfd	include/libwebsockets/lws-esp32.h	/^struct pollfd {$/;"	s
 port	include/libwebsockets/lws-client.h	/^	int port;$/;"	m	struct:lws_client_connect_info
 port	include/libwebsockets/lws-context-vhost.h	/^	int port;$/;"	m	struct:lws_context_creation_info
+port	minimal-ws-server-echo.c	/^int interrupted, port = 60000, options;$/;"	v
 pos	include/libwebsockets/lws-http.h	/^	int pos; \/**< position in match *\/$/;"	m	struct:lws_process_html_state
 pos	include/libwebsockets/lws-vfs.h	/^	lws_filepos_t			pos;$/;"	m	struct:lws_fop_fd
 position	include/jansson.h	/^    int position;$/;"	m	struct:json_error_t
@@ -3608,16 +3621,17 @@ propertyCount_	include/rapidjson/schema.h	/^    SizeType propertyCount_;$/;"	m	c
 propertyExist	include/rapidjson/schema.h	/^    bool* propertyExist;$/;"	m	struct:internal::SchemaValidationContext
 protocol	include/libwebsockets/lws-client.h	/^	const char *protocol;$/;"	m	struct:lws_client_connect_info
 protocol	include/libwebsockets/lws-context-vhost.h	/^	const char *protocol;$/;"	m	struct:lws_http_mount
-protocol	protocol_lws_minimal.c	/^	const struct lws_protocols *protocol;$/;"	m	struct:per_vhost_data__minimal	typeref:struct:per_vhost_data__minimal::lws_protocols	file:
+protocol	junk/protocol_lws_minimal.c	/^	const struct lws_protocols *protocol;$/;"	m	struct:per_vhost_data__minimal	typeref:struct:per_vhost_data__minimal::lws_protocols	file:
 protocols	include/libwebsockets/lws-context-vhost.h	/^	const struct lws_protocols *protocols;$/;"	m	struct:lws_context_creation_info	typeref:struct:lws_context_creation_info::lws_protocols
 protocols	include/libwebsockets/lws-protocols-plugins.h	/^	const struct lws_protocols *protocols; \/**< array of supported protocols provided by plugin *\/$/;"	m	struct:lws_plugin_capability	typeref:struct:lws_plugin_capability::lws_protocols
-protocols	minimal-ws-server.c	/^static struct lws_protocols protocols[] = {$/;"	v	typeref:struct:lws_protocols	file:
-protocols	protocol_lws_minimal.c	/^static const struct lws_protocols protocols[] = {$/;"	v	typeref:struct:lws_protocols	file:
+protocols	junk/minimal-ws-server.c	/^static struct lws_protocols protocols[] = {$/;"	v	typeref:struct:lws_protocols	file:
+protocols	junk/protocol_lws_minimal.c	/^static const struct lws_protocols protocols[] = {$/;"	v	typeref:struct:lws_protocols	file:
+protocols	minimal-ws-server-echo.c	/^static struct lws_protocols protocols[] = {$/;"	v	typeref:struct:lws_protocols	file:
 protocols	test_main.cpp	/^static struct lws_protocols protocols[] = {$/;"	v	typeref:struct:lws_protocols	file:
 provided_client_ssl_ctx	include/libwebsockets/lws-context-vhost.h	/^	SSL_CTX *provided_client_ssl_ctx;$/;"	m	struct:lws_context_creation_info
 provided_client_ssl_ctx	include/libwebsockets/lws-context-vhost.h	/^	void *provided_client_ssl_ctx; \/**< dummy if ssl disabled *\/$/;"	m	struct:lws_context_creation_info
-pss_list	protocol_lws_minimal.c	/^	struct per_session_data__minimal *pss_list; \/* linked-list of live pss*\/$/;"	m	struct:per_vhost_data__minimal	typeref:struct:per_vhost_data__minimal::per_session_data__minimal	file:
-pss_list	protocol_lws_minimal.c	/^	struct per_session_data__minimal *pss_list;$/;"	m	struct:per_session_data__minimal	typeref:struct:per_session_data__minimal::per_session_data__minimal	file:
+pss_list	junk/protocol_lws_minimal.c	/^	struct per_session_data__minimal *pss_list; \/* linked-list of live pss*\/$/;"	m	struct:per_vhost_data__minimal	typeref:struct:per_vhost_data__minimal::per_session_data__minimal	file:
+pss_list	junk/protocol_lws_minimal.c	/^	struct per_session_data__minimal *pss_list;$/;"	m	struct:per_session_data__minimal	typeref:struct:per_session_data__minimal::per_session_data__minimal	file:
 pt_serv_buf_size	include/libwebsockets/lws-context-vhost.h	/^	unsigned int pt_serv_buf_size;$/;"	m	struct:lws_context_creation_info
 ptr_	include/rapidjson/document.h	/^    Pointer ptr_; \/\/!< raw pointer$/;"	m	class:GenericMemberIterator
 push_to_idle_worker	handle_message.cpp	/^void push_to_idle_worker(ws_client_t * ws_client){$/;"	f
@@ -3683,7 +3697,8 @@ sha1	include/libwebsockets/lws-genhash.h	/^		mbedtls_sha1_context sha1;$/;"	m	un
 sha256	include/libwebsockets/lws-genhash.h	/^		mbedtls_sha256_context sha256;$/;"	m	union:lws_genhash_ctx::__anon10
 sha512	include/libwebsockets/lws-genhash.h	/^		mbedtls_sha512_context sha512; \/* 384 also uses this *\/$/;"	m	union:lws_genhash_ctx::__anon10
 sig	include/libwebsockets/lws-vfs.h	/^	const char *sig;	\/* NULL or vfs signature, eg, ".zip\/" *\/$/;"	m	struct:lws_fops_index
-sigint_handler	minimal-ws-server.c	/^void sigint_handler(int sig)$/;"	f
+sigint_handler	junk/minimal-ws-server.c	/^void sigint_handler(int sig)$/;"	f
+sigint_handler	minimal-ws-server-echo.c	/^void sigint_handler(int sig)$/;"	f
 sigint_handler	test_main.cpp	/^void sigint_handler(int sig)$/;"	f
 signal_cb	include/libwebsockets/lws-context-vhost.h	/^	void (*signal_cb)(void *event_lib_handle, int signum);$/;"	m	struct:lws_context_creation_info
 simultaneous_ssl_restriction	include/libwebsockets/lws-context-vhost.h	/^	int simultaneous_ssl_restriction;$/;"	m	struct:lws_context_creation_info
@@ -3705,6 +3720,11 @@ src_	include/rapidjson/stream.h	/^    Ch* src_;$/;"	m	struct:GenericInsituString
 src_	include/rapidjson/stream.h	/^    const Ch* src_;     \/\/!< Current read position.$/;"	m	struct:GenericStringStream
 ss	include/rapidjson/document.h	/^        ShortString ss;$/;"	m	union:GenericValue::Data
 ss_	include/rapidjson/internal/regex.h	/^    SourceStream& ss_;$/;"	m	class:internal::DecodedStream
+ss_binary	include/eval_types.h	/^	char ss_binary[40*BUFSIZ];$/;"	m	struct:_engine_t
+ss_binary_len	include/eval_types.h	/^	int  ss_binary_len;$/;"	m	struct:_engine_t
+ss_rsp	include/eval_types.h	/^	char ss_rsp[20*BUFSIZ];$/;"	m	struct:_engine_t
+ss_start	include/eval_types.h	/^	char ss_start[BUFSIZ];$/;"	m	struct:_engine_t
+ss_stop	include/eval_types.h	/^	char ss_stop[BUFSIZ];$/;"	m	struct:_engine_t
 ssid	include/libwebsockets/lws-esp32.h	/^	char ssid[4][64];$/;"	m	struct:lws_esp32
 ssid	include/libwebsockets/lws-misc.h	/^	char ssid[32];$/;"	m	struct:lws_wifi_scan
 ssize_t	include/libwebsockets.h	343;"	d
@@ -3738,7 +3758,7 @@ start	include/libwebsockets/lws-http.h	/^	char *start; \/**< pointer to start of
 start	include/libwebsockets/lws-ws-ext.h	/^	const char *start; \/**< value *\/$/;"	m	struct:lws_ext_option_arg
 start	include/rapidjson/internal/regex.h	/^        SizeType start;$/;"	m	struct:internal::GenericRegex::Frag
 start	include/rapidjson/internal/regex.h	/^        unsigned start; \/\/ $/;"	m	struct:internal::GenericRegex::Range
-start_engines	handle_message.cpp	/^void start_engines(){$/;"	f
+start_engine_threads	handle_message.cpp	/^void start_engine_threads(){$/;"	f
 start_params	handle_message.cpp	/^const char * start_params = "\\$/;"	v
 state	include/eval_types.h	/^	int state;$/;"	m	struct:_engine_t
 state0_	include/rapidjson/internal/regex.h	/^    Stack<Allocator> state0_;$/;"	m	class:internal::GenericRegexSearch
@@ -3847,6 +3867,8 @@ uv_timer_init	include/libwebsockets/lws-esp32.h	/^static LWS_INLINE void uv_time
 uv_timer_start	include/libwebsockets/lws-esp32.h	/^static LWS_INLINE void uv_timer_start(uv_timer_t *t, uv_cb_t *cb, int first, int rep)$/;"	f
 uv_timer_stop	include/libwebsockets/lws-esp32.h	/^static LWS_INLINE void uv_timer_stop(uv_timer_t *t)$/;"	f
 uv_timer_t	include/libwebsockets/lws-esp32.h	/^typedef TimerHandle_t uv_timer_t;$/;"	t
+valid	include/eval_types.h	/^	int valid;$/;"	m	struct:_engine_t
+valid	include/eval_types.h	/^	volatile int valid;$/;"	m	struct:websockets_client
 valid_	include/rapidjson/pointer.h	/^        bool valid_;        \/\/!< Whether the parsing is valid.$/;"	m	class:GenericPointer::PercentDecodeStream
 valid_	include/rapidjson/schema.h	/^    bool valid_;$/;"	m	class:GenericSchemaValidator
 validatorCount	include/rapidjson/schema.h	/^    SizeType validatorCount;$/;"	m	struct:internal::SchemaValidationContext
@@ -3866,9 +3888,8 @@ vars	include/libwebsockets/lws-http.h	/^	const char * const *vars; \/**< list of
 verified	include/libwebsockets/lws-x509.h	/^	unsigned int verified;$/;"	m	union:lws_tls_cert_info_results
 vh	include/libwebsockets/lws-callbacks.h	/^	struct lws_vhost *vh;$/;"	m	struct:lws_acme_cert_aging_args	typeref:struct:lws_acme_cert_aging_args::lws_vhost
 vhost	include/libwebsockets/lws-client.h	/^	struct lws_vhost *vhost;$/;"	m	struct:lws_client_connect_info	typeref:struct:lws_client_connect_info::lws_vhost
-vhost	protocol_lws_minimal.c	/^	struct lws_vhost *vhost;$/;"	m	struct:per_vhost_data__minimal	typeref:struct:per_vhost_data__minimal::lws_vhost	file:
+vhost	junk/protocol_lws_minimal.c	/^	struct lws_vhost *vhost;$/;"	m	struct:per_vhost_data__minimal	typeref:struct:per_vhost_data__minimal::lws_vhost	file:
 vhost_name	include/libwebsockets/lws-context-vhost.h	/^	const char *vhost_name;$/;"	m	struct:lws_context_creation_info
-wait_engines	handle_message.cpp	/^void wait_engines(){$/;"	f
 wcstoimax	include/rapidjson/msinttypes/inttypes.h	311;"	d
 wcstoumax	include/rapidjson/msinttypes/inttypes.h	312;"	d
 websockets_client	include/eval_types.h	/^typedef struct websockets_client {$/;"	s
@@ -3883,7 +3904,7 @@ ws_ping_pong_interval	include/libwebsockets/lws-context-vhost.h	/^	unsigned shor
 wsi	include/eval_types.h	/^	struct lws *wsi;$/;"	m	struct:websockets_client	typeref:struct:websockets_client::lws
 wsi	include/libwebsockets/lws-threadpool.h	/^	struct lws *wsi;	\/**< user must set to wsi task is bound to *\/$/;"	m	struct:lws_threadpool_task_args	typeref:struct:lws_threadpool_task_args::lws
 wsi	include/libwebsockets/lws-write.h	/^	struct lws *wsi;$/;"	m	struct:lws_write_passthru	typeref:struct:lws_write_passthru::lws
-wsi	protocol_lws_minimal.c	/^	struct lws *wsi;$/;"	m	struct:per_session_data__minimal	typeref:struct:per_session_data__minimal::lws	file:
+wsi	junk/protocol_lws_minimal.c	/^	struct lws *wsi;$/;"	m	struct:per_session_data__minimal	typeref:struct:per_session_data__minimal::lws	file:
 ~ClearStackOnExit	include/rapidjson/document.h	/^        ~ClearStackOnExit() { d_.ClearStack(); }$/;"	f	struct:GenericDocument::ClearStackOnExit
 ~ClearStackOnExit	include/rapidjson/reader.h	/^        ~ClearStackOnExit() { r_.ClearStack(); }$/;"	f	struct:GenericReader::ClearStackOnExit
 ~GenericArray	include/rapidjson/document.h	/^    ~GenericArray() {}$/;"	f	class:GenericArray

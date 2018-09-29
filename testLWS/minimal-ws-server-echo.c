@@ -10,7 +10,7 @@
 #include "libwebsockets.h"
 
 #define LWS_PLUGIN_STATIC
-extern void handle_message(ws_client_t * ws_client, void * in, int len);
+extern int  handle_message(ws_client_t * ws_client, void * in, int len);
 extern void start_engine_threads();
 extern void join_engine_threads();
 extern void notify_engine_threads();

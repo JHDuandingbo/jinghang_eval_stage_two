@@ -20,7 +20,7 @@
 #include <string.h>
 
 extern void push_to_idle_worker(ws_client_t * ws_client);
-extern void handle_message(ws_client_t * ws_client, void * in, int len);
+extern int handle_message(ws_client_t * ws_client, void * in, int len);
 
 /* one of these created for each message */
 
@@ -35,10 +35,7 @@ __minimal_destroy_message(void *_msg)
 callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 		void *user, void *in, size_t len)
 {
-	ws_client_t *ws_client =
-		(ws_client_t *)user;
-
-	int ret = 0;
+	ws_client_t *ws_client =(ws_client_t *)user;
 	switch (reason) {
 
 		case LWS_CALLBACK_PROTOCOL_INIT:
@@ -48,23 +45,11 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 		case LWS_CALLBACK_ESTABLISHED:
 			{
 
-				fprintf(stderr, "established\n");
+				lwsl_info("%s:%d, established\n", __FUNCTION__, __LINE__);
 				ws_client->wsi = wsi;
-
-				/*
-				   ws_client->buflen = 0;
-
-				   ws_client->msg_ok = 0;
-
-				   bzero(ws_client->buffer, sizeof(ws_client->buffer));
-				 */
-
-				lwsl_info("%s:%d", __FUNCTION__, __LINE__);
 				push_to_idle_worker(ws_client);
+				return 0;
 			}
-
-			lwsl_user("LWS_CALLBACK_ESTABLISHED\n");
-			break;
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			{
@@ -72,44 +57,45 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 
 				engine_t * eng = (engine_t *) ws_client->engine;
 				lwsl_user("LWS_CALLBACK_SERVER_WRITEABLE\n");
-				int len = strlen(eng->rsp);
-				int m = lws_write(wsi,(unsigned char *)eng->rsp, len, LWS_WRITE_TEXT);
-				if (m <len){
+				int len = strlen(eng->ss_rsp);
+				int m = lws_write(wsi,(unsigned char *)eng->ss_rsp, len, LWS_WRITE_TEXT);
+				if (m < len){
 					lwsl_err("ERROR %d writing to ws socket\n", m);
-					ret = -1;
-					break;
+					eng->valid = 0;
+					return -1;
 
-				}else{
-					bzero(eng->rsp,sizeof(eng->rsp));
 				}
-				break;
+				bzero(eng->ss_rsp,sizeof(eng->ss_rsp));
+				return 0;
 			}
 
 		case LWS_CALLBACK_RECEIVE:
-			//lwsl_info("Got %d bytes!tet:%d\n", len, ws_client->buflen);
-
-			handle_message(ws_client, in,len);
-
-
-			break;
+			return handle_message(ws_client, in,len);
 
 		case LWS_CALLBACK_CLOSED:
 			{
 				lwsl_user("LWS_CALLBACK_CLOSED\n");
+				//ws_client->valid = -1;
+
+				
 				engine_t * eng = (engine_t *) ws_client->engine;
+//				eng->msg_ok = 0;
+				eng->valid = 0;
 				eng->state =ENG_STATE_IDLE;
-				eng->msg_ok = 0;
-				bzero(eng->rsp,sizeof(eng->rsp));
+				bzero(eng->ss_stop,sizeof(eng->ss_stop));
+				bzero(eng->ss_start,sizeof(eng->ss_start));
+				bzero(eng->ss_rsp,sizeof(eng->ss_rsp));
 				eng->buflen = 0;
 				bzero(eng->buffer,sizeof(eng->buffer));
+				//return ws_client->valid;
+				break;
 			}
-			break;
 
 		default:
 			break;
 	}
 
-	return ret;
+	return 0;
 }
 
 #define LWS_PLUGIN_PROTOCOL_MINIMAL_SERVER_ECHO \

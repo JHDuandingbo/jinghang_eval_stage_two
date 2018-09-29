@@ -1,6 +1,7 @@
 #include "ssound.h"
 #include "jansson.h"
 #include <unistd.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -22,6 +23,7 @@
 #include <thread>
 using namespace rapidjson;
 
+#define BATCH_SIZE 32000
 //json_t * config, *start_params, *fake_rsp;
 //char * start_params_str;
 //static json_error_t       error; 
@@ -93,7 +95,7 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		if(ss_rsp.HasMember("params") && ss_rsp["params"].HasMember("request") && ss_rsp["params"]["request"].HasMember("coreType")){
 			coreType = ss_rsp["params"]["request"]["coreType"].GetString();
 		}
-		fprintf(stderr, "\ncoreType:%s, %s:%d\n",coreType,__FUNCTION__, __LINE__);
+		fprintf(stderr, "\ncoreType:%s, <func %s>:<line %d>\n",coreType,__FUNCTION__, __LINE__);
 		if(!strcmp(coreType, "en.sent.score") || !strcmp(coreType,"en.word.score")){
 			if(ss_rsp.HasMember("refText")){
 				refText = ss_rsp["refText"].GetString();
@@ -111,7 +113,7 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 				}
 			}
 		}
-		fprintf(stderr, "\ndebug:%s:%d\n",__FUNCTION__, __LINE__);
+		fprintf(stderr, "\ndebug:<func %s>:<line %d>\n",__FUNCTION__, __LINE__);
 		if(!strcmp(coreType, "en.pict.score") || !strcmp(coreType,"en.pgan.score")){
 			if(ss_rsp.HasMember("result") ){
 				Value & res = ss_rsp["result"];
@@ -121,7 +123,7 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 			}
 
 		}
-		fprintf(stderr, "\ndebug:%s:%d\n",__FUNCTION__, __LINE__);
+		fprintf(stderr, "\ndebug:<func %s>:<line %d>\n",__FUNCTION__, __LINE__);
 
 
 		Document d;
@@ -153,12 +155,12 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		const char * str  = stringbuffer.GetString();
 		//int len = send(fd, str, strlen(str), 0);
 		//fprintf(stderr, "write %d bytes to ws\n", len);
-		strncpy(eng->rsp, str, sizeof(eng->rsp));
-		if(ws_client){
-			lwsl_notice("%s:%d, lws_callback_on_writeable called !\n", __FUNCTION__, __LINE__);
+		strncpy(eng->ss_rsp, str, sizeof(eng->ss_rsp));
+		if(eng->valid){//0 indicates valid , -1 indicates invalid
+			lwsl_notice("<func %s>:<line %d>, lws_callback_on_writeable called !\n", __FUNCTION__, __LINE__);
 			lws_callback_on_writable(ws_client->wsi);
 		}else{
-			lwsl_notice("%s:%d, no ws_client attached to this engine!\n", __FUNCTION__, __LINE__);
+			lwsl_notice("<func %s>:<line %d>, no ws_client attached to this engine or ws_client closed!\n", __FUNCTION__, __LINE__);
 		}
 	}
 	return 0;
@@ -166,63 +168,73 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 void eval_worker(engine_t *eng)
 {
 	eng->engine = ssound_new(init_params_str);
-	while(1){
+	while(!interrupted){
 		ws_client_t * ws_client = eng->ws_client;
 
 		std::unique_lock<std::mutex> lock(eng->m);
-		eng->cv.wait(lock, [eng]{return  interrupted || eng->msg_ok;});
-		if(interrupted){
-			break;
-		}
-		lwsl_notice("%s:%d, worker awaken!\n", __FUNCTION__, __LINE__);
-		int binary = eng->binary;
-		int state = eng->state;
-		if(binary) {
-			if(state == ENG_STATE_STARTED){
-				ssound_feed(eng->engine, eng->buffer, eng->buflen);
-				lwsl_notice("%s:%d, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, eng->buflen);
-			}else{
-				lwsl_err("%s:%d, current state:%d, got binary data, illegal data\n", __FUNCTION__, __LINE__, state);
-				//do somthing
-			}
-		}else{
-			Document msg;
-			lwsl_notice("%s:%d, handle <%s>\n", __FUNCTION__, __LINE__, eng->buffer);
-			msg.Parse(eng->buffer);
-			if(msg.HasParseError()){
-				lwsl_err("%s:%d, error while parsing txt\n", __FUNCTION__, __LINE__);
-				fprintf(stderr,"<%s>\n",  eng->buffer);
-			}
-			const char * action = msg["action"].GetString();
-
-			lwsl_notice("%s:%d, action %s\n", __FUNCTION__, __LINE__, action);
-			if(!strcmp(action,"stop")){
-				fprintf(stderr, "\nstop\n");
-				ssound_stop(eng->engine);
-				eng->state =  ENG_STATE_IDLE;
-			}else if(!strcmp(action, "start")){
-				Document start_tpl;
-				start_tpl.Parse(start_params);
-				start_tpl.RemoveMember("request");
-				start_tpl.AddMember("request", msg["request"], start_tpl.GetAllocator());
-				StringBuffer stringbuffer;
-				Writer<StringBuffer> writer(stringbuffer);
-				start_tpl.Accept(writer);
-				const char * start_tpl_str  = stringbuffer.GetString();
-
-				fprintf(stderr, "\nstart:%s\n",start_tpl_str);
-				char id[64];
-				ssound_start(eng->engine, start_tpl_str, id, ssound_cb, (void*)eng);
-				eng->state = ENG_STATE_STARTED;
-			}else{
-
-			}
-
-		}
-
-		eng->buflen =0;
-		eng->msg_ok =0;
+		eng->cv.wait(lock, [eng]{puts("waiting");return eng->valid || interrupted;});
 		lock.unlock();
+		while( eng->valid && !interrupted){
+			int state = eng->state;
+			if(eng->action != ACTION_NULL && lock.try_lock()){
+				lwsl_notice("<func %s>:<line %d>, worker try handle action:%d!\n", __FUNCTION__, __LINE__, eng->action);
+				switch(state){
+					case ENG_STATE_OCCUPIED:
+						if(eng->action == ACTION_START){
+							Document msg;
+							lwsl_notice("<func %s>:<line %d>:", __FUNCTION__, __LINE__);
+							fprintf(stderr, "start str:<%s>\n", eng->ss_start);
+							msg.Parse(eng->ss_start);
+							Document start_tpl;
+							start_tpl.Parse(start_params);
+							start_tpl.RemoveMember("request");
+							start_tpl.AddMember("request", msg["request"], start_tpl.GetAllocator());
+							StringBuffer stringbuffer;
+							Writer<StringBuffer> writer(stringbuffer);
+							start_tpl.Accept(writer);
+							const char * start_tpl_str  = stringbuffer.GetString();
+
+							char id[64];
+							ssound_start(eng->engine, start_tpl_str, id, ssound_cb, (void*)eng);
+							lwsl_info("<func %s>:<line %d>, engine started:\n", __FUNCTION__, __LINE__);
+							eng->ss_start[0]='\0';
+							eng->state = ENG_STATE_STARTED;
+
+						}
+						break;
+					case ENG_STATE_STARTED:
+						if(eng->action == ACTION_BINARY){  
+
+							int data_len = eng->ss_binary_len;
+							if(data_len > 0){
+								int len  = data_len  > BATCH_SIZE ? BATCH_SIZE : data_len;
+								//int len  = BATCH_SIZE;
+								char * ptr = eng->ss_binary;
+								ssound_feed(eng->engine, ptr, len);
+								lwsl_info("<func %s>:<line %d>, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, len);
+								memmove(ptr, &ptr[len], len);
+								eng->ss_binary_len -= len;
+							}else{
+								lwsl_info("<func %s>:<line %d>, feed 0 bytes to engine with binary action\n", __FUNCTION__, __LINE__);
+							}
+						}else if(eng->action == ACTION_STOP){
+							ssound_stop(eng->engine);
+							eng->state =  ENG_STATE_IDLE;
+							lwsl_info("<func %s>:<line %d>, stop engine\n", __FUNCTION__, __LINE__);
+							eng->ss_stop[0]='\0';
+						}
+
+
+
+						break;
+				}
+				if(eng->action == ACTION_BINARY){  
+					usleep(20*1000);
+				}
+				eng->action = ACTION_NULL;
+				lock.unlock();
+			}
+		}
 	}
 	ssound_stop(eng->engine);
 	ssound_delete(eng->engine);
@@ -265,21 +277,28 @@ void push_to_idle_worker(ws_client_t * ws_client){
 			ws_client->engine = &(engines[i]);
 			engines[i].ws_client = ws_client;
 			engines[i].state = ENG_STATE_OCCUPIED;
+			engines[i].action = ACTION_NULL;
+			engines[i].buflen = 0;
+			engines[i].ss_binary_len = 0;
+			engines[i].valid = 1;
 			break;
 		}
 	}
 
 	if(i == ENG_N){
 		lwsl_err("Drop ws client,engine already  overloaded");
+	}else{
+		engines[i].cv.notify_one();
 	}
 
 }
-void handle_message(ws_client_t * ws_client, void * in, int len){
-
+int handle_message(ws_client_t * ws_client, void * in, int len){
+	int ret = 0;
+	lwsl_notice("<func %s>:<line %d> got %5d bytes\n", __FUNCTION__, __LINE__, len);
 	engine_t * eng =(engine_t *) ws_client->engine;
 	if(!eng){
-		lwsl_err("ws not attached to a worker engine\n");
-		return;
+		lwsl_err("<func %s>:<line %d>, ws not attached to a worker engine\n", __FUNCTION__, __LINE__ );
+		return 0;
 	}
 
 	std::unique_lock<std::mutex> lock(eng->m);
@@ -288,24 +307,64 @@ void handle_message(ws_client_t * ws_client, void * in, int len){
 	const size_t remaining = lws_remaining_packet_payload(wsi);
 	char * pbuf = eng->buffer;
 	assert(len + eng->buflen <= (sizeof (eng->buffer)));
+	if(len + eng->buflen > sizeof(eng->buffer)){
+		lwsl_err("<func %s>:<line %d>, engine buffer full, set ws_client to -1, close it", __FUNCTION__, __LINE__);
+		eng->valid =0;
+		lock.unlock();
+		return -1;
+	}
 	memcpy(&pbuf[eng->buflen], in, len);
 	eng->buflen += len;
 	eng->binary = lws_frame_is_binary(wsi);
 
 	if(!remaining && lws_is_final_fragment(wsi)) {
-		eng->msg_ok = 1;
 		if(!eng->binary){
-			//fprintf(stderr, "TXT:%s\n", ws_client->buffer);
-			lwsl_notice("%s:%d msg ok, GOT TXT MSG:%d bytes<%s>\n",__FUNCTION__, __LINE__,  eng->buflen, eng->buffer);
-			//lwsl_info("TXT:%s\n", ws_client->incoming);
+			eng->buffer[eng->buflen]='\0';
+			lwsl_notice("\n<func %s>:<line %d> msg ok, GOT TXT MSG:%d bytes<func %s>\n",__FUNCTION__, __LINE__,  eng->buflen, eng->buffer);
+			Document msg;
+			msg.Parse(eng->buffer);
+			if(msg.HasParseError()){
+				lwsl_err("<func %s>:<line %d>, error while parsing txt, closing ws client:", __FUNCTION__, __LINE__);
+				fprintf(stderr,"<func %s>\n",  eng->buffer);
+				//ws_client->valid = -1;
+				eng->valid=0;
+				eng->state = ENG_STATE_IDLE;
+				ret = -1;
+			}else{
+				const char * action = msg["action"].GetString();
+				lwsl_notice("<func %s>:<line %d>, action %s\n", __FUNCTION__, __LINE__, action);
+				if(!strcmp(action,"start")){
+					//overflow??
+					eng->action = ACTION_START;
+					memcpy(eng->ss_start, eng->buffer, eng->buflen);
+					eng->ss_start[eng->buflen]='\0';
+				}else if(!strcmp(action, "stop")){
+					eng->action = ACTION_STOP;
+					memcpy(eng->ss_stop, eng->buffer, eng->buflen);
+					eng->ss_stop[eng->buflen]='\0';
+				}
+
+			}
 		}else{
-			lwsl_notice("%s:%d  msg ok,GOT BIN MSG:%d bytes\n", __FUNCTION__, __LINE__, eng->buflen);
+
+			char * ptr = eng->ss_binary;
+
+			if(eng->buflen + eng->ss_binary_len > sizeof(eng->ss_binary)){
+				lwsl_err("<func %s>:<line %d>, engine binary buffer full, set ws_client to -1, close it", __FUNCTION__, __LINE__);
+				eng->valid =0;
+				ret = -1;
+			}else{
+				memcpy(&ptr[eng->ss_binary_len], eng->buffer, eng->buflen);
+				eng->ss_binary_len += eng->buflen;
+				eng->action=ACTION_BINARY;
+			}
+			lwsl_notice("\n<func %s>:<line %d>  msg ok,GOT BIN MSG:%d bytes\n", __FUNCTION__, __LINE__, eng->buflen);
 		}
+		eng->buflen=0;
 	}else{
-		eng->msg_ok = 0;
+		eng->action=ACTION_NULL;
 	}
 	lock.unlock();
-	eng->cv.notify_one();
-	lwsl_notice("%s:%d notify worker,got %5d bytes,  msg_ok:%d\n", __FUNCTION__, __LINE__, len, eng->msg_ok);
-
+	return ret;
+	//eng->cv.notify_one();
 }
