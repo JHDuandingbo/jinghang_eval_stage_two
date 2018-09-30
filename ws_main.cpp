@@ -20,7 +20,7 @@ static struct lws_protocols protocols[] = {
 	{ NULL, NULL, 0, 0 } /* terminator */
 };
 
-int interrupted, port = 60000, options;
+int interrupted, port = 3000, options;
 
 
 void sigint_handler(int sig)

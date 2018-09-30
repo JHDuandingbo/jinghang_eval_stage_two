@@ -57,6 +57,8 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 
 				engine_t * eng = (engine_t *) ws_client->engine;
 				lwsl_user("LWS_CALLBACK_SERVER_WRITEABLE\n");
+				fprintf(stderr, "rsp:%s\n", eng->ss_rsp);
+				
 				int len = strlen(eng->ss_rsp);
 				int m = lws_write(wsi,(unsigned char *)eng->ss_rsp, len, LWS_WRITE_TEXT);
 				if (m < len){
@@ -66,7 +68,7 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 
 				}
 				bzero(eng->ss_rsp,sizeof(eng->ss_rsp));
-				return 0;
+				return  -1;
 			}
 
 		case LWS_CALLBACK_RECEIVE:
