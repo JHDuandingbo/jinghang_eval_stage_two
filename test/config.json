@@ -1,0 +1,53 @@
+{
+	"init_params":{
+		"appKey":"a235",
+			"secretKey":"c11163aa6c834a028da4a4b30955bd15",
+			"cloud":{
+				"server":"wss://api.cloud.ssapi.cn",
+				"connectTimeout":20,
+				"serverTimeout":60
+			}
+	},
+		"start_params":{
+			"coreProvideType":"cloud",
+			"app":{
+				"userId":"guest"
+			},
+			"audio":{
+				"audioType":"wav",
+				"sampleRate":16000,
+				"channel":1,
+				"sampleBytes":2
+			},
+			"request":{
+				"coreType":"en.sent.score",
+				"refText":"Well it must be a great experience for you and i think it can deepen your understanding about americon culture",
+				"attachAudioUrl":1,
+				"rank":100
+			}
+		},
+
+		"fake_rsp":{
+			"errId": 0,
+			"errMsg": "",
+			"userId": "guest",
+			"ts": 1537412244,
+			"result": {
+				"stress": {
+					"score": 92
+				},
+				"pron": {
+					"score": 72
+				},
+				"fluency": {
+					"score": 24
+				},
+				"request": {
+					"coreType": "sentence.score",
+					"refText": "Hello world",
+					"precision": 0.5,
+					"rank": 100
+				}
+			}
+		}
+}

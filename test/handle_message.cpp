@@ -83,24 +83,11 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		ss_rsp.Parse(buffer);
 
 
-		Document d;
-		Document::AllocatorType &a  = d.GetAllocator();;
-
-		d.SetObject();
-		d.AddMember("errId", Value(0), d.GetAllocator());
-		d.AddMember("errMsg", "", d.GetAllocator());
-		d.AddMember("userId", "guest", d.GetAllocator());
-		d.AddMember("ts", time(NULL), d.GetAllocator());
 
 
-
-		Value badWordIndex, missingWordIndex;
-		badWordIndex.SetArray();
-		missingWordIndex.SetArray();
 		const char * refText = "";
 		const char * coreType ="";
-		//float pron = 0.0, fluency=0.0, stress = 0.0, overall=0.0;
-		float scoreProNoAccent = 0.0, scoreProFluency = 0.0, scoreProStress = 0.0;
+		float pron = 0.0, fluency=0.0, stress = 0.0;
 		if(ss_rsp.HasMember("errId")){
 			return 0 ;
 		}
@@ -109,59 +96,29 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 			coreType = ss_rsp["params"]["request"]["coreType"].GetString();
 		}
 		fprintf(stderr, "\ncoreType:%s, <func %s>:<line %d>\n",coreType,__FUNCTION__, __LINE__);
-		if(!strcmp(coreType, "en.sent.score")){
-			//badWordIndex.PushBack(1,a).PushBack(2,a);
-			
-			
-
-			
+		if(!strcmp(coreType, "en.sent.score") || !strcmp(coreType,"en.word.score")){
 			if(ss_rsp.HasMember("refText")){
 				refText = ss_rsp["refText"].GetString();
 			}
 			if(ss_rsp.HasMember("result") ){
 				Value & res = ss_rsp["result"];
-				if(res.HasMember("details")){
-					Value & arr = res["details"];
-					for(int i=0; i < arr.Size(); i++){
-						double score = arr[i]["score"].GetDouble();
-						if(score < 3){//rank 5, threshold 3
-							badWordIndex.PushBack(i+1, a);
-						}
-						//fprintf(stderr, "score:%d\n", arr[i]["score"].GetDouble());
-					
-					}
-				}
 				if(res.HasMember("pron")){
-					scoreProNoAccent = res["pron"].GetDouble();
+					pron = res["pron"].GetDouble();
 				}
 				if(res.HasMember("rhythm") && res["rhythm"].HasMember("stress")){
-					scoreProStress = res["rhythm"]["stress"].GetDouble();
+					stress = res["rhythm"]["stress"].GetDouble();
 				}
 				if(res.HasMember("fluency") && res["fluency"].HasMember("overall")){
-					scoreProFluency = res["fluency"]["overall"].GetDouble();
+					fluency = res["fluency"]["overall"].GetDouble();
 				}
 			}
-
 		}
-		if(!strcmp(coreType, "en.word.score")){
-			if(ss_rsp.HasMember("refText")){
-				refText = ss_rsp["refText"].GetString();
-			}
-			if(ss_rsp.HasMember("result") ){
-				Value & res = ss_rsp["result"];
-				if(res.HasMember("pron")){//"pron"
-					scoreProNoAccent = res["pron"].GetDouble();
-				}
-				scoreProFluency = scoreProStress = scoreProNoAccent;
-			}
-
-		}
-
+		fprintf(stderr, "\ndebug:<func %s>:<line %d>\n",__FUNCTION__, __LINE__);
 		if(!strcmp(coreType, "en.pict.score") || !strcmp(coreType,"en.pgan.score")){
 			if(ss_rsp.HasMember("result") ){
 				Value & res = ss_rsp["result"];
 				if(res.HasMember("overall")){
-					scoreProFluency = scoreProStress = scoreProNoAccent = res["overall"].GetDouble();
+					fluency = stress = pron = res["overall"].GetDouble();
 				}
 			}
 
@@ -169,29 +126,28 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		fprintf(stderr, "\ndebug:<func %s>:<line %d>\n",__FUNCTION__, __LINE__);
 
 
+		Document d;
+		d.SetObject();
 		Value result;
 		result.SetObject();
-		if(!strcmp(coreType, "en.sent.score")){
-			result.AddMember("badWordIndex", badWordIndex, a);
-			result.AddMember("missingWordIndex", missingWordIndex, a);
-		}
-		
-		//result.AddMember("badWordIndex", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
-		//result.AddMember("missingWordIndex", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
+		d.AddMember("errId", Value(0), d.GetAllocator());
+		d.AddMember("errMsg", "", d.GetAllocator());
+		d.AddMember("userId", "guest", d.GetAllocator());
+		d.AddMember("ts", time(NULL), d.GetAllocator());
 		char tmp[BUFSIZ];
-		snprintf(tmp, sizeof(tmp), "%f", scoreProNoAccent);
+		snprintf(tmp, sizeof(tmp), "%f", pron);
 		result.AddMember("scoreProNoAccent", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
 
 		bzero(tmp,sizeof(tmp));
-		snprintf(tmp, sizeof(tmp), "%f", scoreProFluency);
+		snprintf(tmp, sizeof(tmp), "%f", fluency);
 		result.AddMember("scoreProFluency", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
 
 		bzero(tmp,sizeof(tmp));
-		snprintf(tmp, sizeof(tmp), "%f", scoreProStress);
+		snprintf(tmp, sizeof(tmp), "%f", stress);
 		result.AddMember("scoreProStress", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
 		result.AddMember("sentence", Value("").SetString(refText, strlen(refText)) ,d.GetAllocator());
-
 		d.AddMember("result", result, d.GetAllocator());
+		//result.AddMember("sentence",Value(refText) ,d.GetAllocator());
 
 		StringBuffer stringbuffer;
 		Writer<StringBuffer> writer(stringbuffer);
@@ -221,7 +177,7 @@ void eval_worker(engine_t *eng)
 		while( eng->valid && !interrupted){
 			int state = eng->state;
 			if(eng->action != ACTION_NULL && lock.try_lock()){
-				lwsl_notice("<func %s>:<line %d>, worker try handle action:%d, current state:%d!\n", __FUNCTION__, __LINE__, eng->action, state);
+				lwsl_notice("<func %s>:<line %d>, worker try handle action:%d!\n", __FUNCTION__, __LINE__, eng->action);
 				switch(state){
 					case ENG_STATE_OCCUPIED:
 						if(eng->action == ACTION_START){
@@ -252,6 +208,7 @@ void eval_worker(engine_t *eng)
 							int data_len = eng->ss_binary_len;
 							if(data_len > 0){
 								int len  = data_len  > BATCH_SIZE ? BATCH_SIZE : data_len;
+								//int len  = BATCH_SIZE;
 								char * ptr = eng->ss_binary;
 								ssound_feed(eng->engine, ptr, len);
 								lwsl_info("<func %s>:<line %d>, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, len);
@@ -341,7 +298,7 @@ int handle_message(ws_client_t * ws_client, void * in, int len){
 	engine_t * eng =(engine_t *) ws_client->engine;
 	if(!eng){
 		lwsl_err("<func %s>:<line %d>, ws not attached to a worker engine\n", __FUNCTION__, __LINE__ );
-		return -1;
+		return 0;
 	}
 
 	std::unique_lock<std::mutex> lock(eng->m);
@@ -349,7 +306,7 @@ int handle_message(ws_client_t * ws_client, void * in, int len){
 	struct lws * wsi = ws_client->wsi;
 	const size_t remaining = lws_remaining_packet_payload(wsi);
 	char * pbuf = eng->buffer;
-	//assert(len + eng->buflen <= (sizeof (eng->buffer)));
+	assert(len + eng->buflen <= (sizeof (eng->buffer)));
 	if(len + eng->buflen > sizeof(eng->buffer)){
 		lwsl_err("<func %s>:<line %d>, engine buffer full, set ws_client to -1, close it", __FUNCTION__, __LINE__);
 		eng->valid =0;
