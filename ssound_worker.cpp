@@ -213,6 +213,29 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 	}
 	return 0;
 }
+
+const char * action2str(int action){
+	switch(action){
+		case  ACTION_NULL:
+			return  "ACTION_NULL";
+		case  ACTION_START:
+			return  "ACTION_START";
+		case  ACTION_BINARY:
+			return  "ACTION_BINARY";
+		case  ACTION_STOP:
+			return  "ACTION_STOP";
+	}
+}
+const char * state2str(int state){
+	switch(state){
+		case  ENG_STATE_IDLE:
+			return  "ENG_STATE_IDLE";
+		case  ENG_STATE_OCCUPIED:
+			return  "ENG_STATE_OCCUPIED";
+		case  ENG_STATE_STARTED:
+			return  "ENG_STATE_STARTED";
+	}
+}
 void eval_worker(engine_t *eng)
 {
 	eng->engine = ssound_new(init_params_str);
@@ -225,7 +248,7 @@ void eval_worker(engine_t *eng)
 		while( eng->valid && !interrupted){
 			int state = eng->state;
 			if(eng->action != ACTION_NULL && lock.try_lock()){
-				lwsl_notice("<func %s>:<line %d>, worker try handle action:%d, current state:%d!\n", __FUNCTION__, __LINE__, eng->action, state);
+				lwsl_notice("<func %s>:<line %d>, worker try handle action:%s, current state:%s!\n", __FUNCTION__, __LINE__, action2str(eng->action), state2str(state));
 				switch(state){
 					case ENG_STATE_OCCUPIED:
 						if(eng->action == ACTION_START){
@@ -244,9 +267,9 @@ void eval_worker(engine_t *eng)
 
 							char id[64];
 							ssound_start(eng->engine, start_tpl_str, id, ssound_cb, (void*)eng);
-							lwsl_info("<func %s>:<line %d>, engine started:\n", __FUNCTION__, __LINE__);
 							eng->ss_start[0]='\0';
 							eng->state = ENG_STATE_STARTED;
+							lwsl_info("<func %s>:<line %d>, engine started:, state:%d\n", __FUNCTION__, __LINE__, eng->state);
 
 						}
 						break;
@@ -266,8 +289,9 @@ void eval_worker(engine_t *eng)
 							}
 						}else if(eng->action == ACTION_STOP){
 							ssound_stop(eng->engine);
-							eng->state =  ENG_STATE_IDLE;
-							lwsl_info("<func %s>:<line %d>, stop engine\n", __FUNCTION__, __LINE__);
+							//eng->state =  ENG_STATE_IDLE;
+							eng->state =  ENG_STATE_OCCUPIED;
+							lwsl_info("<func %s>:<line %d>, stop engine, state:%d\n", __FUNCTION__, __LINE__, eng->state);
 							eng->ss_stop[0]='\0';
 						}
 
