@@ -39,10 +39,12 @@ int main ()
 	
 
 	Value b;
+	int foo=9;
+	cout<<std::to_string(9+1)<<endl;
+	const char * str = to_string(9+1).c_str();
+	cout<<str<<endl;
 	b.SetArray();
-	b.PushBack(1, a);
-	b.PushBack(1, a);
-	b.PushBack("heell", a);
+	b.PushBack(Value("hello").SetString(to_string(9)), a);
 /*
 	Document::AllocatorType& a = d1.GetAllocator();
 

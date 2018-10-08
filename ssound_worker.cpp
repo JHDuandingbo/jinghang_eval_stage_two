@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+//#include <string>
 #include <assert.h>
 #include <netinet/tcp.h>
 #include <ev.h>
@@ -125,7 +126,10 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 					for(int i=0; i < arr.Size(); i++){
 						double score = arr[i]["score"].GetDouble();
 						if(score < 3){//rank 5, threshold 3
-							badWordIndex.PushBack(i+1, a);
+							Value strVal;
+							std::string pos = std::to_string(i+1);
+							strVal.SetString(pos.c_str(), pos.length(), a);
+							badWordIndex.PushBack(strVal, a);
 						}
 						//fprintf(stderr, "score:%d\n", arr[i]["score"].GetDouble());
 					

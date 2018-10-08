@@ -68,7 +68,8 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 
 				}
 				bzero(eng->ss_rsp,sizeof(eng->ss_rsp));
-				return  -1;
+				//return  -1;
+				return  0;
 			}
 
 		case LWS_CALLBACK_RECEIVE:
