@@ -1,4 +1,8 @@
 #include "ssound.h"
+extern "C" 
+{
+#include "libsiren/siren7.h"
+}
 #include "jansson.h"
 #include <unistd.h>
 #include <unistd.h>
@@ -22,6 +26,8 @@
 #include "eval_types.h"
 
 #include <thread>
+FILE * compressedFP = NULL;
+FILE * rawFP = NULL;
 using namespace rapidjson;
 
 #define BATCH_SIZE 32000
@@ -29,6 +35,7 @@ using namespace rapidjson;
 //char * start_params_str;
 //static json_error_t       error; 
 engine_t  engines[ENG_N];
+static SirenDecoder decoder;
 const char * init_params_str="{\
 			      \"appKey\":\"a235\", \
 			      \"secretKey\":\"c11163aa6c834a028da4a4b30955bd15\", \
@@ -61,8 +68,52 @@ const char * start_params = "\
 
 extern  int interrupted;
 
+#define DECODE_BATCH_SIZE 640
+#define ENCODE_BATCH_SIZE 40
+void feed_binary(engine_t *eng){
+	int data_len = eng->ss_binary_len;
+	char * ptr = eng->ss_binary;
+	if(data_len <= 0){
+		lwsl_info("<func %s>:<line %d>, feed 0 bytes to engine with binary action\n", __FUNCTION__, __LINE__);
+	}
+	if(!eng->compressed){
+		int len  = data_len  > BATCH_SIZE ? BATCH_SIZE : data_len;
+		ssound_feed(eng->engine, ptr, len);
+		lwsl_info("<func %s>:<line %d>, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, len);
+		memmove(ptr, &ptr[len], len);
+		eng->ss_binary_len -= len;
+
+	}else{
+		//unsigned char ibuf[ENCODE_BATCH_SIZE];
+		//unsigned char obuf[DECODE_BATCH_SIZE];
+		unsigned char ibuf[40];
+		unsigned char obuf[640];
+		lwsl_info("<func %s>:<line %d>, decode %d bytes\n", __FUNCTION__, __LINE__, data_len);
+		//while(data_len >= ENCODE_BATCH_SIZE){
+		while(data_len >= 40){
+			memcpy(ibuf, ptr, sizeof(ibuf));
+			Siren7_DecodeFrame(decoder, ibuf, obuf);
+
+			if(rawFP != NULL){
+				lwsl_info("<func %s>:<line %d>, write decoded data to file\n", __FUNCTION__, __LINE__);
+				fwrite(obuf, sizeof(obuf), 1, rawFP);
+			}
+			lwsl_info("<func %s>:<line %d>, feed  %lu bytes to engine\n", __FUNCTION__, __LINE__, sizeof(obuf));
+			ssound_feed(eng->engine, obuf, sizeof(obuf));
+			//data_len -= ENCODE_BATCH_SIZE;	
+			//memmove(ptr, &ptr[sizeof(ibuf)], sizeof(ibuf));
+			memmove(ptr,  ptr + 40, 40);
+			data_len -= 40;
+
+		}
+		eng->ss_binary_len = data_len;
+
+		//////////////////////////////
+
+	}
+}
 	int
-ssound_cb(const void *usrdata,              const char *id, int type,               const void *message, int size)
+ssound_cb(const void *usrdata, const char *id, int type,const void *message, int size)
 {
 
 	time_t to = time(NULL);
@@ -92,7 +143,10 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		d.AddMember("errMsg", "", d.GetAllocator());
 		d.AddMember("userId", "guest", d.GetAllocator());
 		d.AddMember("ts", time(NULL), d.GetAllocator());
-
+		lwsl_notice("<func %s>:<line %d>, userData:%s\n",__FUNCTION__, __LINE__, eng->user_data);
+		if(strlen(eng->user_data)){
+			d.AddMember("userData", Value("").SetString(eng->user_data, strlen(eng->user_data)) ,d.GetAllocator());
+		}
 
 
 		Value badWordIndex, missingWordIndex;
@@ -109,13 +163,9 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 		if(ss_rsp.HasMember("params") && ss_rsp["params"].HasMember("request") && ss_rsp["params"]["request"].HasMember("coreType")){
 			coreType = ss_rsp["params"]["request"]["coreType"].GetString();
 		}
-		fprintf(stderr, "\ncoreType:%s, <func %s>:<line %d>\n",coreType,__FUNCTION__, __LINE__);
+		lwsl_notice("\ncoreType:%s, <func %s>:<line %d>\n",coreType,__FUNCTION__, __LINE__);
 		if(!strcmp(coreType, "en.sent.score")){
 			//badWordIndex.PushBack(1,a).PushBack(2,a);
-			
-			
-
-			
 			if(ss_rsp.HasMember("refText")){
 				refText = ss_rsp["refText"].GetString();
 			}
@@ -132,7 +182,7 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 							badWordIndex.PushBack(strVal, a);
 						}
 						//fprintf(stderr, "score:%d\n", arr[i]["score"].GetDouble());
-					
+
 					}
 				}
 				if(res.HasMember("pron")){
@@ -146,8 +196,7 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 				}
 			}
 
-		}
-		if(!strcmp(coreType, "en.word.score")){
+		}else if(!strcmp(coreType, "en.word.score")){
 			if(ss_rsp.HasMember("refText")){
 				refText = ss_rsp["refText"].GetString();
 			}
@@ -159,9 +208,7 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 				scoreProFluency = scoreProStress = scoreProNoAccent;
 			}
 
-		}
-
-		if(!strcmp(coreType, "en.pict.score") || !strcmp(coreType,"en.pgan.score")){
+		}else if(!strcmp(coreType, "en.pict.score") || !strcmp(coreType,"en.pgan.score")){
 			if(ss_rsp.HasMember("result") ){
 				Value & res = ss_rsp["result"];
 				if(res.HasMember("overall")){
@@ -170,8 +217,8 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 			}
 
 		}
-		fprintf(stderr, "\ndebug:<func %s>:<line %d>\n",__FUNCTION__, __LINE__);
 
+		lwsl_notice("<func %s>:<line %d>, scoreProNoAccent:%f, scoreProFluency:%f , scoreProStress:%f!\n", __FUNCTION__, __LINE__, scoreProNoAccent, scoreProFluency, scoreProStress);
 
 		Value result;
 		result.SetObject();
@@ -179,20 +226,20 @@ ssound_cb(const void *usrdata,              const char *id, int type,           
 			result.AddMember("badWordIndex", badWordIndex, a);
 			result.AddMember("missingWordIndex", missingWordIndex, a);
 		}
-		
+
 		//result.AddMember("badWordIndex", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
 		//result.AddMember("missingWordIndex", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
-		char tmp[BUFSIZ];
+		char tmp[256],tmp1[256],tmp2[256];
 		snprintf(tmp, sizeof(tmp), "%f", scoreProNoAccent);
 		result.AddMember("scoreProNoAccent", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
 
-		bzero(tmp,sizeof(tmp));
-		snprintf(tmp, sizeof(tmp), "%f", scoreProFluency);
-		result.AddMember("scoreProFluency", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
+		bzero(tmp1,sizeof(tmp1));
+		snprintf(tmp1, sizeof(tmp1), "%f", scoreProFluency);
+		result.AddMember("scoreProFluency", Value("").SetString(tmp1, strlen(tmp1)) ,d.GetAllocator());
 
-		bzero(tmp,sizeof(tmp));
-		snprintf(tmp, sizeof(tmp), "%f", scoreProStress);
-		result.AddMember("scoreProStress", Value("").SetString(tmp, strlen(tmp)) ,d.GetAllocator());
+		bzero(tmp2,sizeof(tmp2));
+		snprintf(tmp2, sizeof(tmp2), "%f", scoreProStress);
+		result.AddMember("scoreProStress", Value("").SetString(tmp2, strlen(tmp2)) ,d.GetAllocator());
 		result.AddMember("sentence", Value("").SetString(refText, strlen(refText)) ,d.GetAllocator());
 
 		d.AddMember("result", result, d.GetAllocator());
@@ -224,6 +271,10 @@ const char * action2str(int action){
 			return  "ACTION_BINARY";
 		case  ACTION_STOP:
 			return  "ACTION_STOP";
+		case  ACTION_CANCEL:
+			return  "ACTION_CANCEL";
+		default :
+			return  "ILLEGAL_ACTION";
 	}
 }
 const char * state2str(int state){
@@ -269,34 +320,48 @@ void eval_worker(engine_t *eng)
 							ssound_start(eng->engine, start_tpl_str, id, ssound_cb, (void*)eng);
 							eng->ss_start[0]='\0';
 							eng->state = ENG_STATE_STARTED;
-							lwsl_info("<func %s>:<line %d>, engine started:, state:%d\n", __FUNCTION__, __LINE__, eng->state);
+							lwsl_info("<func %s>:<line %d>, engine started:, state:%s\n", __FUNCTION__, __LINE__, state2str (eng->state));
 
 						}
 						break;
 					case ENG_STATE_STARTED:
 						if(eng->action == ACTION_BINARY){  
+							feed_binary(eng);
+							/*
 
-							int data_len = eng->ss_binary_len;
-							if(data_len > 0){
-								int len  = data_len  > BATCH_SIZE ? BATCH_SIZE : data_len;
-								char * ptr = eng->ss_binary;
-								ssound_feed(eng->engine, ptr, len);
-								lwsl_info("<func %s>:<line %d>, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, len);
-								memmove(ptr, &ptr[len], len);
-								eng->ss_binary_len -= len;
-							}else{
-								lwsl_info("<func %s>:<line %d>, feed 0 bytes to engine with binary action\n", __FUNCTION__, __LINE__);
-							}
+							   int data_len = eng->ss_binary_len;
+							   if(data_len > 0){
+							   int len  = data_len  > BATCH_SIZE ? BATCH_SIZE : data_len;
+							   char * ptr = eng->ss_binary;
+							   ssound_feed(eng->engine, ptr, len);
+							   lwsl_info("<func %s>:<line %d>, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, len);
+							   memmove(ptr, &ptr[len], len);
+							   eng->ss_binary_len -= len;
+							   }else{
+							   lwsl_info("<func %s>:<line %d>, feed 0 bytes to engine with binary action\n", __FUNCTION__, __LINE__);
+							   }
+							 */
 						}else if(eng->action == ACTION_STOP){
 							ssound_stop(eng->engine);
-							//eng->state =  ENG_STATE_IDLE;
 							eng->state =  ENG_STATE_OCCUPIED;
 							lwsl_info("<func %s>:<line %d>, stop engine, state:%d\n", __FUNCTION__, __LINE__, eng->state);
 							eng->ss_stop[0]='\0';
+
+						}else if(eng->action == ACTION_CANCEL){
+							ssound_cancel(eng->engine);
+							eng->state =  ENG_STATE_OCCUPIED;
+							lwsl_info("<func %s>:<line %d>, cancel engine, state:%d\n", __FUNCTION__, __LINE__, eng->state);
+							eng->ss_cancel[0]='\0';
 						}
 
 
 
+						break;
+					default:
+						lwsl_info("<func %s>:<line %d>, action and state not match, skip this action", __FUNCTION__, __LINE__);
+						if(eng->action == ACTION_BINARY){  
+							eng->ss_binary_len = 0; //clear binary buffer
+						}
 						break;
 				}
 				if(eng->action == ACTION_BINARY){  
@@ -314,6 +379,7 @@ void eval_worker(engine_t *eng)
 
 
 void start_engine_threads(){
+	decoder = Siren7_NewDecoder(16000);
 	for(int i=0; i<ENG_N; i++){
 		//engines[i].engine = ssound_new(init_params_str);
 		engines[i].state=ENG_STATE_IDLE;
@@ -330,6 +396,7 @@ void notify_engine_threads(){
 	}
 }
 void join_engine_threads(){
+	Siren7_CloseDecoder(decoder);
 	for(int i=0; i<ENG_N; i++){
 		if(engines[i].t.joinable()){
 			engines[i].t.join();
@@ -363,6 +430,8 @@ void push_to_idle_worker(ws_client_t * ws_client){
 	}
 
 }
+
+
 int handle_message(ws_client_t * ws_client, void * in, int len){
 	int ret = 0;
 	lwsl_notice("<func %s>:<line %d> got %5d bytes\n", __FUNCTION__, __LINE__, len);
@@ -403,21 +472,54 @@ int handle_message(ws_client_t * ws_client, void * in, int len){
 				ret = -1;
 			}else{
 				const char * action = msg["action"].GetString();
-				lwsl_notice("<func %s>:<line %d>, action %s\n", __FUNCTION__, __LINE__, action);
+
+
+
+				//const char * user_data = msg["userData"].GetString();
 				if(!strcmp(action,"start")){
 					//overflow??
 					eng->action = ACTION_START;
 					memcpy(eng->ss_start, eng->buffer, eng->buflen);
+
 					eng->ss_start[eng->buflen]='\0';
+					if(msg.HasMember("userData")){
+						const char * user_data = msg["userData"].GetString();
+						bzero(eng->user_data, sizeof(eng->user_data));
+						strncpy(eng->user_data, user_data , sizeof(eng->user_data));
+						lwsl_notice("<func %s>:<line %d>, action %s, user_data:%s\n", __FUNCTION__, __LINE__, action, user_data);
+					}
+					if(msg.HasMember("compressed") && msg["compressed"].IsInt()){
+						eng->compressed = msg["compressed"].GetInt();
+
+						if(eng->compressed == 1){
+							lwsl_notice("<func %s>:<line %d>, open test file\n", __FUNCTION__, __LINE__);
+
+							compressedFP = fopen("./raw.compressed", "w");
+							if(compressedFP == NULL){
+								lwsl_err("<func %s>:<line %d>, open test file failed!!!\n", __FUNCTION__, __LINE__);
+							}
+							rawFP = fopen("./raw.pcm", "w");
+						}
+					}else{
+						eng->compressed =  0;
+					}
 				}else if(!strcmp(action, "stop")){
 					eng->action = ACTION_STOP;
 					memcpy(eng->ss_stop, eng->buffer, eng->buflen);
 					eng->ss_stop[eng->buflen]='\0';
+					if(eng->compressed == 1){
+				
+						lwsl_info("<func %s>:<line %d>  close test file \n", __FUNCTION__, __LINE__);
+						fclose(compressedFP);
+						fclose(rawFP);
+					}
+				}else if(!strcmp(action, "cancel")){
+					eng->action = ACTION_CANCEL;
 				}
 
 			}
 		}else{
-
+			//Got binary data;
 			char * ptr = eng->ss_binary;
 
 			if(eng->buflen + eng->ss_binary_len > sizeof(eng->ss_binary)){
@@ -425,6 +527,15 @@ int handle_message(ws_client_t * ws_client, void * in, int len){
 				eng->valid =0;
 				ret = -1;
 			}else{
+
+				if(eng->compressed == 1){ 
+					if(compressedFP != NULL){
+						lwsl_info("<func %s>:<line %d>  write test file \n", __FUNCTION__, __LINE__);
+						fwrite(eng->buffer, eng->buflen, 1 , compressedFP);
+					}else{
+						lwsl_info("<func %s>:<line %d>  test file not open \n", __FUNCTION__, __LINE__);
+					}
+				}
 				memcpy(&ptr[eng->ss_binary_len], eng->buffer, eng->buflen);
 				eng->ss_binary_len += eng->buflen;
 				eng->action=ACTION_BINARY;

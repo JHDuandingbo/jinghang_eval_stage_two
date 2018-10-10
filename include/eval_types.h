@@ -29,6 +29,7 @@ typedef struct websockets_client {
 #define ACTION_START 0
 #define ACTION_BINARY 1
 #define ACTION_STOP 2
+#define ACTION_CANCEL 3
 
 //#define BATCH_SIZE 32000
 //#define ENG_STATE_STOPPED 3
@@ -41,12 +42,15 @@ typedef struct _engine_t{
 	ws_client_t * ws_client;
 	
 
+	char core_type[256];
+	char user_data[BUFSIZ];
 
 
 	char ss_binary[40*BUFSIZ];
 	int  ss_binary_len;
 	char ss_start[BUFSIZ];
 	char ss_stop[BUFSIZ];
+	char ss_cancel[BUFSIZ];
 	char ss_rsp[20*BUFSIZ];
 
 	char buffer[20*BUFSIZ];
@@ -55,6 +59,7 @@ typedef struct _engine_t{
 	int action;//0:start, 1:binary,2:stop
 	int valid;
 	int binary;
+	int compressed;
 
 	std::thread t;
 	std::mutex m;
