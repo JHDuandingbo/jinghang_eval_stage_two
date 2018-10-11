@@ -35,7 +35,6 @@ using namespace rapidjson;
 //char * start_params_str;
 //static json_error_t       error; 
 engine_t  engines[ENG_N];
-static SirenDecoder decoder;
 const char * init_params_str="{\
 			      \"appKey\":\"a235\", \
 			      \"secretKey\":\"c11163aa6c834a028da4a4b30955bd15\", \
@@ -88,32 +87,57 @@ void feed_binary(engine_t *eng){
 		//unsigned char obuf[DECODE_BATCH_SIZE];
 		unsigned char ibuf[40];
 		unsigned char obuf[640];
+		unsigned char feed_buf[3200];
 		lwsl_info("<func %s>:<line %d>, decode %d bytes\n", __FUNCTION__, __LINE__, data_len);
-		//while(data_len >= ENCODE_BATCH_SIZE){
-		while(data_len >= 40){
-			memcpy(ibuf, ptr, sizeof(ibuf));
-			Siren7_DecodeFrame(decoder, ibuf, obuf);
+		SirenDecoder decoder= Siren7_NewDecoder(16000);
+		//while(data_len >= ENCODE_BATCH_SIZE)
+		/*
+		   while(data_len >= 40){
+		   memcpy(ibuf, ptr, 40);
+		   Siren7_DecodeFrame(decoder, ibuf, obuf);
 
+		   if(rawFP != NULL){
+		   lwsl_info("<func %s>:<line %d>, write decoded data to file\n", __FUNCTION__, __LINE__);
+		   fwrite(obuf, sizeof(obuf), 1, rawFP);
+		   }
+		   lwsl_info("<func %s>:<line %d>, feed  %lu bytes to engine\n", __FUNCTION__, __LINE__, sizeof(obuf));
+		   ssound_feed(eng->engine, obuf, sizeof(obuf));
+		//data_len -= ENCODE_BATCH_SIZE;	
+		//memmove(ptr, &ptr[sizeof(ibuf)], sizeof(ibuf));
+		memmove(ptr,  ptr + 40, 40);
+		data_len -= 40;
+
+		}
+		 */
+		while(data_len >= 3200/16){
+			//memcpy(ibuf, ptr, 40);
+			/*
+			   if(compressedFP != NULL){
+			   lwsl_info("<func %s>:<line %d>  write test file \n", __FUNCTION__, __LINE__);
+			   fwrite(ptr, 40, 1 , compressedFP);
+			   }else{
+			   lwsl_info("<func %s>:<line %d>  test file not open \n", __FUNCTION__, __LINE__);
+			   }
+			 */
+			Siren7_DecodeFrame(decoder, (unsigned char *)ptr, obuf);
 			if(rawFP != NULL){
 				lwsl_info("<func %s>:<line %d>, write decoded data to file\n", __FUNCTION__, __LINE__);
 				fwrite(obuf, sizeof(obuf), 1, rawFP);
 			}
 			lwsl_info("<func %s>:<line %d>, feed  %lu bytes to engine\n", __FUNCTION__, __LINE__, sizeof(obuf));
 			ssound_feed(eng->engine, obuf, sizeof(obuf));
-			//data_len -= ENCODE_BATCH_SIZE;	
-			//memmove(ptr, &ptr[sizeof(ibuf)], sizeof(ibuf));
 			memmove(ptr,  ptr + 40, 40);
 			data_len -= 40;
 
 		}
+		Siren7_CloseDecoder(decoder);
 		eng->ss_binary_len = data_len;
 
 		//////////////////////////////
 
 	}
 }
-	int
-ssound_cb(const void *usrdata, const char *id, int type,const void *message, int size)
+int ssound_cb(const void *usrdata, const char *id, int type,const void *message, int size)
 {
 
 	time_t to = time(NULL);
@@ -379,7 +403,7 @@ void eval_worker(engine_t *eng)
 
 
 void start_engine_threads(){
-	decoder = Siren7_NewDecoder(16000);
+	//decoder = Siren7_NewDecoder(16000);
 	for(int i=0; i<ENG_N; i++){
 		//engines[i].engine = ssound_new(init_params_str);
 		engines[i].state=ENG_STATE_IDLE;
@@ -396,7 +420,7 @@ void notify_engine_threads(){
 	}
 }
 void join_engine_threads(){
-	Siren7_CloseDecoder(decoder);
+	//Siren7_CloseDecoder(decoder);
 	for(int i=0; i<ENG_N; i++){
 		if(engines[i].t.joinable()){
 			engines[i].t.join();
@@ -508,7 +532,7 @@ int handle_message(ws_client_t * ws_client, void * in, int len){
 					memcpy(eng->ss_stop, eng->buffer, eng->buflen);
 					eng->ss_stop[eng->buflen]='\0';
 					if(eng->compressed == 1){
-				
+
 						lwsl_info("<func %s>:<line %d>  close test file \n", __FUNCTION__, __LINE__);
 						fclose(compressedFP);
 						fclose(rawFP);
