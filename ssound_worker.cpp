@@ -168,7 +168,7 @@ int ssound_cb(const void *usrdata, const char *id, int type,const void *message,
 		d.AddMember("userId", "guest", d.GetAllocator());
 		d.AddMember("ts", time(NULL), d.GetAllocator());
 		lwsl_notice("<func %s>:<line %d>, userData:%s\n",__FUNCTION__, __LINE__, eng->user_data);
-		if(strlen(eng->user_data)){
+		if(eng->got_user_data){
 			d.AddMember("userData", Value("").SetString(eng->user_data, strlen(eng->user_data)) ,d.GetAllocator());
 		}
 
@@ -328,13 +328,34 @@ void eval_worker(engine_t *eng)
 					case ENG_STATE_OCCUPIED:
 						if(eng->action == ACTION_START){
 							Document msg;
+
 							lwsl_notice("<func %s>:<line %d>:", __FUNCTION__, __LINE__);
 							fprintf(stderr, "start str:<%s>\n", eng->ss_start);
 							msg.Parse(eng->ss_start);
 							Document start_tpl;
+							Document::AllocatorType &a  = start_tpl.GetAllocator();;
 							start_tpl.Parse(start_params);
 							start_tpl.RemoveMember("request");
-							start_tpl.AddMember("request", msg["request"], start_tpl.GetAllocator());
+
+
+							const char * coreType = msg["request"]["coreType"].GetString();
+							if(!strcmp(coreType, "en.sim.score")){
+								Value reqObj;
+								reqObj.SetObject();
+								reqObj.AddMember("coreType", Value("").SetString("en.sent.score", strlen("en.sent.score")) ,a);
+								reqObj.AddMember("rank",5, a);
+								reqObj.AddMember("precision",0.1, a);
+								const char * refText = msg["request"]["implications"][0].GetString();
+								reqObj.AddMember("refText", Value("").SetString(refText, strlen(refText)) ,a);
+								start_tpl.AddMember("request", reqObj, a);
+							}else{
+
+								start_tpl.AddMember("request", msg["request"], start_tpl.GetAllocator());
+
+							}
+
+
+
 							StringBuffer stringbuffer;
 							Writer<StringBuffer> writer(stringbuffer);
 							start_tpl.Accept(writer);
@@ -344,7 +365,7 @@ void eval_worker(engine_t *eng)
 							ssound_start(eng->engine, start_tpl_str, id, ssound_cb, (void*)eng);
 							eng->ss_start[0]='\0';
 							eng->state = ENG_STATE_STARTED;
-							lwsl_info("<func %s>:<line %d>, engine started:, state:%s\n", __FUNCTION__, __LINE__, state2str (eng->state));
+							lwsl_info("<func %s>:<line %d>, engine started:,req:%s,  state:%s\n", __FUNCTION__, __LINE__,start_tpl_str,  state2str (eng->state));
 
 						}
 						break;
@@ -507,10 +528,13 @@ int handle_message(ws_client_t * ws_client, void * in, int len){
 
 					eng->ss_start[eng->buflen]='\0';
 					if(msg.HasMember("userData")){
+						eng->got_user_data = 1;
 						const char * user_data = msg["userData"].GetString();
 						bzero(eng->user_data, sizeof(eng->user_data));
 						strncpy(eng->user_data, user_data , sizeof(eng->user_data));
 						lwsl_notice("<func %s>:<line %d>, action %s, user_data:%s\n", __FUNCTION__, __LINE__, action, user_data);
+					}else{
+						eng->got_user_data = 0;
 					}
 					if(msg.HasMember("compressed") && msg["compressed"].IsInt()){
 						eng->compressed = msg["compressed"].GetInt();

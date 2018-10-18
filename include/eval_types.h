@@ -44,6 +44,7 @@ typedef struct _engine_t{
 
 	char core_type[256];
 	char user_data[BUFSIZ];
+	int  got_user_data;
 
 
 	char ss_binary[40*BUFSIZ];
