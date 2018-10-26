@@ -3,7 +3,7 @@ extern "C"
 {
 #include "libsiren/siren7.h"
 }
-#include "jansson.h"
+//#include "jansson.h"
 #include <unistd.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -11,12 +11,12 @@ extern "C"
 //#include <string>
 #include <assert.h>
 #include <netinet/tcp.h>
-#include <ev.h>
+//#include <ev.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <pthread.h>
 #include <netinet/in.h>
-#include <ev.h>
+//#include <ev.h>
 #include <signal.h>
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
