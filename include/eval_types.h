@@ -5,7 +5,7 @@ extern "C"
 {
 #include "libsiren/siren7.h"
 }
-#include "jansson.h"
+//#include "jansson.h"
 #include <ssound.h>
 #include <thread>
 #include <iostream>
