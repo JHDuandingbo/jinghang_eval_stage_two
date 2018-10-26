@@ -78,12 +78,14 @@ void feed_binary(engine_t *eng){
 	if(!eng->compressed){
 		int len  = data_len  > BATCH_SIZE ? BATCH_SIZE : data_len;
 		ssound_feed(eng->engine, ptr, len);
+#ifdef DEBUG_SAVE_AUDIO
 		if(eng->fp){
 			int bytes = fwrite(ptr, 1, len, eng->fp);
 			if(bytes != len){
 				lwsl_warn("<func %s>:<line %d>, %d bytes saved, but %d expected", __FUNCTION__, __LINE__, bytes, len);
 			}
 		}
+#endif
 		//lwsl_info("<func %s>:<line %d>, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, len);
 		memmove(ptr, &ptr[len], len);
 		eng->ss_binary_len -= len;
@@ -374,14 +376,16 @@ void eval_worker(engine_t *eng)
 							ssound_start(eng->engine, start_tpl_str, id, ssound_cb, (void*)eng);
 							eng->ss_start[0]='\0';
 							eng->state = ENG_STATE_STARTED;
-
+#ifdef DEBUG_SAVE_AUDIO
 							char buffer[BUFSIZ];
 							struct timeval tv; gettimeofday(&tv, NULL);
 							snprintf(buffer, sizeof(buffer), "/tmp/audio/%lu.pcm",  tv.tv_sec * 1000000 + tv.tv_usec);
+					
 							eng->fp = fopen(buffer, "w");
 							if(!eng->fp){
 								lwsl_err("<func %s>:<line %d>, fopen failed! %s\n", __FUNCTION__, __LINE__, strerror(errno));
 							}
+#endif
 
 							lwsl_info("<func %s>:<line %d>, engine started:,req:%s,  state:%s\n", __FUNCTION__, __LINE__,start_tpl_str,  state2str (eng->state));
 
@@ -391,10 +395,12 @@ void eval_worker(engine_t *eng)
 						if(eng->action == ACTION_BINARY){  
 							feed_binary(eng);
 						}else if(eng->action == ACTION_STOP){
+#ifdef DEBUG_SAVE_AUDIO
 							if(eng->fp){
 								fclose(eng->fp);
 								eng->fp=NULL;
 							}
+#endif
 							ssound_stop(eng->engine);
 							eng->state =  ENG_STATE_OCCUPIED;
 							lwsl_info("<func %s>:<line %d>, stop engine, state:%d\n", __FUNCTION__, __LINE__, eng->state);
