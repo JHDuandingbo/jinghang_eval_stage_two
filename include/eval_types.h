@@ -1,6 +1,11 @@
 #ifndef _EVAL_TYPES_____
 #define _EVAL_TYPES_____
 #include <libwebsockets.h>
+extern "C" 
+{
+#include "libsiren/siren7.h"
+}
+#include "jansson.h"
 #include <ssound.h>
 #include <thread>
 #include <iostream>
@@ -9,10 +14,10 @@
 typedef struct websockets_client {
 	struct lws *wsi;
 	int incoming_len;								
-//	char buffer[20*BUFSIZ];
-//	int  buflen;
-//	int msg_ok;
-//	int binary;
+	//	char buffer[20*BUFSIZ];
+	//	int  buflen;
+	//	int msg_ok;
+	//	int binary;
 	int type;
 	volatile int valid;
 
@@ -38,9 +43,12 @@ typedef struct _engine_t{
 	char type[256];
 	//started working, stopped, null;   null------>started->working->stopped->null
 	int state;
-		
+	FILE *fp;
+
 	ws_client_t * ws_client;
-	
+
+	SirenDecoder decoder;
+
 
 	char core_type[256];
 	char user_data[BUFSIZ];

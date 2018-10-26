@@ -42,9 +42,14 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 
 			break;
 
+		case LWS_CALLBACK_RECEIVE_PONG:
+			{
+				lwsl_info("%s:%d, LWS_CALLBACK_RECEIVE_PONG\n", __FUNCTION__, __LINE__);
+				return 0;
+			}
 		case LWS_CALLBACK_ESTABLISHED:
 			{
-
+				//lws_set_timer_usecs(wsi, 2 * LWS_USEC_PER_SEC);
 				lwsl_info("%s:%d, established\n", __FUNCTION__, __LINE__);
 				ws_client->wsi = wsi;
 				push_to_idle_worker(ws_client);
@@ -57,9 +62,12 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 
 				engine_t * eng = (engine_t *) ws_client->engine;
 				lwsl_user("LWS_CALLBACK_SERVER_WRITEABLE\n");
-				fprintf(stderr, "rsp:%s\n", eng->ss_rsp);
-				
+
 				int len = strlen(eng->ss_rsp);
+				fprintf(stderr, "rsp:%s, len:%d\n", eng->ss_rsp, len);
+				if(!len){
+					return 0;
+				}
 				int m = lws_write(wsi,(unsigned char *)eng->ss_rsp, len, LWS_WRITE_TEXT);
 				if (m < len){
 					lwsl_err("ERROR %d writing to ws socket\n", m);
@@ -69,6 +77,10 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 				}
 				bzero(eng->ss_rsp,sizeof(eng->ss_rsp));
 				//return  -1;
+				if(eng->engine){
+					ssound_delete(eng->engine);
+					eng->engine = NULL;
+				}
 				return  0;
 			}
 
@@ -80,9 +92,10 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 				lwsl_user("LWS_CALLBACK_CLOSED\n");
 				//ws_client->valid = -1;
 
-				
+
 				engine_t * eng = (engine_t *) ws_client->engine;
-//				eng->msg_ok = 0;
+				//ssound_cancel(eng->engine);
+				//				eng->msg_ok = 0;
 				eng->valid = 0;
 				eng->state =ENG_STATE_IDLE;
 				bzero(eng->ss_stop,sizeof(eng->ss_stop));

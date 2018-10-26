@@ -78,7 +78,13 @@ void feed_binary(engine_t *eng){
 	if(!eng->compressed){
 		int len  = data_len  > BATCH_SIZE ? BATCH_SIZE : data_len;
 		ssound_feed(eng->engine, ptr, len);
-		lwsl_info("<func %s>:<line %d>, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, len);
+		if(eng->fp){
+			int bytes = fwrite(ptr, 1, len, eng->fp);
+			if(bytes != len){
+				lwsl_warn("<func %s>:<line %d>, %d bytes saved, but %d expected", __FUNCTION__, __LINE__, bytes, len);
+			}
+		}
+		//lwsl_info("<func %s>:<line %d>, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, len);
 		memmove(ptr, &ptr[len], len);
 		eng->ss_binary_len -= len;
 
@@ -89,7 +95,7 @@ void feed_binary(engine_t *eng){
 		unsigned char obuf[640];
 		unsigned char feed_buf[3200];
 		lwsl_info("<func %s>:<line %d>, decode %d bytes\n", __FUNCTION__, __LINE__, data_len);
-		SirenDecoder decoder= Siren7_NewDecoder(16000);
+		//SirenDecoder decoder= Siren7_NewDecoder(16000);
 		//while(data_len >= ENCODE_BATCH_SIZE)
 		/*
 		   while(data_len >= 40){
@@ -119,7 +125,7 @@ void feed_binary(engine_t *eng){
 			   lwsl_info("<func %s>:<line %d>  test file not open \n", __FUNCTION__, __LINE__);
 			   }
 			 */
-			Siren7_DecodeFrame(decoder, (unsigned char *)ptr, obuf);
+			Siren7_DecodeFrame(eng->decoder, (unsigned char *)ptr, obuf);
 			if(rawFP != NULL){
 				lwsl_info("<func %s>:<line %d>, write decoded data to file\n", __FUNCTION__, __LINE__);
 				fwrite(obuf, sizeof(obuf), 1, rawFP);
@@ -130,7 +136,7 @@ void feed_binary(engine_t *eng){
 			data_len -= 40;
 
 		}
-		Siren7_CloseDecoder(decoder);
+		//Siren7_CloseDecoder(decoder);
 		eng->ss_binary_len = data_len;
 
 		//////////////////////////////
@@ -281,6 +287,9 @@ int ssound_cb(const void *usrdata, const char *id, int type,const void *message,
 		}else{
 			lwsl_notice("<func %s>:<line %d>, no ws_client attached to this engine or ws_client closed!\n", __FUNCTION__, __LINE__);
 		}
+
+
+
 	}
 	return 0;
 }
@@ -313,7 +322,6 @@ const char * state2str(int state){
 }
 void eval_worker(engine_t *eng)
 {
-	eng->engine = ssound_new(init_params_str);
 	while(!interrupted){
 		ws_client_t * ws_client = eng->ws_client;
 
@@ -323,7 +331,7 @@ void eval_worker(engine_t *eng)
 		while( eng->valid && !interrupted){
 			int state = eng->state;
 			if(eng->action != ACTION_NULL && lock.try_lock()){
-				lwsl_notice("<func %s>:<line %d>, worker try handle action:%s, current state:%s!\n", __FUNCTION__, __LINE__, action2str(eng->action), state2str(state));
+				//lwsl_notice("<func %s>:<line %d>, worker try handle action:%s, current state:%s!\n", __FUNCTION__, __LINE__, action2str(eng->action), state2str(state));
 				switch(state){
 					case ENG_STATE_OCCUPIED:
 						if(eng->action == ACTION_START){
@@ -362,9 +370,19 @@ void eval_worker(engine_t *eng)
 							const char * start_tpl_str  = stringbuffer.GetString();
 
 							char id[64];
+							eng->engine = ssound_new(init_params_str);
 							ssound_start(eng->engine, start_tpl_str, id, ssound_cb, (void*)eng);
 							eng->ss_start[0]='\0';
 							eng->state = ENG_STATE_STARTED;
+
+							char buffer[BUFSIZ];
+							struct timeval tv; gettimeofday(&tv, NULL);
+							snprintf(buffer, sizeof(buffer), "/tmp/audio/%lu.pcm",  tv.tv_sec * 1000000 + tv.tv_usec);
+							eng->fp = fopen(buffer, "w");
+							if(!eng->fp){
+								lwsl_err("<func %s>:<line %d>, fopen failed! %s\n", __FUNCTION__, __LINE__, strerror(errno));
+							}
+
 							lwsl_info("<func %s>:<line %d>, engine started:,req:%s,  state:%s\n", __FUNCTION__, __LINE__,start_tpl_str,  state2str (eng->state));
 
 						}
@@ -372,21 +390,11 @@ void eval_worker(engine_t *eng)
 					case ENG_STATE_STARTED:
 						if(eng->action == ACTION_BINARY){  
 							feed_binary(eng);
-							/*
-
-							   int data_len = eng->ss_binary_len;
-							   if(data_len > 0){
-							   int len  = data_len  > BATCH_SIZE ? BATCH_SIZE : data_len;
-							   char * ptr = eng->ss_binary;
-							   ssound_feed(eng->engine, ptr, len);
-							   lwsl_info("<func %s>:<line %d>, feed  %d bytes to engine\n", __FUNCTION__, __LINE__, len);
-							   memmove(ptr, &ptr[len], len);
-							   eng->ss_binary_len -= len;
-							   }else{
-							   lwsl_info("<func %s>:<line %d>, feed 0 bytes to engine with binary action\n", __FUNCTION__, __LINE__);
-							   }
-							 */
 						}else if(eng->action == ACTION_STOP){
+							if(eng->fp){
+								fclose(eng->fp);
+								eng->fp=NULL;
+							}
 							ssound_stop(eng->engine);
 							eng->state =  ENG_STATE_OCCUPIED;
 							lwsl_info("<func %s>:<line %d>, stop engine, state:%d\n", __FUNCTION__, __LINE__, eng->state);
@@ -417,8 +425,8 @@ void eval_worker(engine_t *eng)
 			}
 		}
 	}
-	ssound_stop(eng->engine);
-	ssound_delete(eng->engine);
+	//ssound_stop(eng->engine);
+	//ssound_delete(eng->engine);
 }
 
 
@@ -426,9 +434,10 @@ void eval_worker(engine_t *eng)
 void start_engine_threads(){
 	//decoder = Siren7_NewDecoder(16000);
 	for(int i=0; i<ENG_N; i++){
-		//engines[i].engine = ssound_new(init_params_str);
+		engines[i].engine = NULL;
 		engines[i].state=ENG_STATE_IDLE;
 		engines[i].ws_client=nullptr;
+		engines[i].decoder= Siren7_NewDecoder(16000);
 		engines[i].t = std::thread(eval_worker, &engines[i]);
 	}
 }
@@ -479,7 +488,7 @@ void push_to_idle_worker(ws_client_t * ws_client){
 
 int handle_message(ws_client_t * ws_client, void * in, int len){
 	int ret = 0;
-	lwsl_notice("<func %s>:<line %d> got %5d bytes\n", __FUNCTION__, __LINE__, len);
+	//lwsl_notice("<func %s>:<line %d> got %5d bytes\n", __FUNCTION__, __LINE__, len);
 	engine_t * eng =(engine_t *) ws_client->engine;
 	if(!eng){
 		lwsl_err("<func %s>:<line %d>, ws not attached to a worker engine\n", __FUNCTION__, __LINE__ );
@@ -588,7 +597,7 @@ int handle_message(ws_client_t * ws_client, void * in, int len){
 				eng->ss_binary_len += eng->buflen;
 				eng->action=ACTION_BINARY;
 			}
-			lwsl_notice("\n<func %s>:<line %d>  msg ok,GOT BIN MSG:%d bytes\n", __FUNCTION__, __LINE__, eng->buflen);
+			//lwsl_notice("\n<func %s>:<line %d>  msg ok,GOT BIN MSG:%d bytes\n", __FUNCTION__, __LINE__, eng->buflen);
 		}
 		eng->buflen=0;
 	}else{

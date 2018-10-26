@@ -80,6 +80,7 @@ int main(int argc, char *argv[]) {
 			Siren7_DecodeFrame(decoder, ibuf, obuf);
 			fwrite(obuf, sizeof(obuf), 1, ofp);
 		}else{
+			fprintf(stderr, "read bytes:%d\n", bytes);
 			fclose(ifp);
 			fclose(ofp);
 			break;

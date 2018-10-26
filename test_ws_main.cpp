@@ -55,6 +55,7 @@ int lws_worker()
 	memset(&info, 0, sizeof info); /* otherwise uninitialized garbage */
 	info.port = port;
 	info.protocols = protocols;
+//	info.ws_ping_pong_interval = 2;
 
 	context = lws_create_context(&info);
 	if (!context) {
