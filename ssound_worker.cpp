@@ -3,7 +3,7 @@ extern "C"
 {
 #include "libsiren/siren7.h"
 }
-#include "jansson.h"
+//#include "jansson.h"
 #include <unistd.h>
 #include <unistd.h>
 #include <stdlib.h>
