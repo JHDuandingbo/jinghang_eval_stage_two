@@ -61,7 +61,7 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 
 
 				engine_t * eng = (engine_t *) ws_client->engine;
-				lwsl_user("LWS_CALLBACK_SERVER_WRITEABLE\n");
+				lwsl_notice("LWS_CALLBACK_SERVER_WRITEABLE\n");
 
 				int len = strlen(eng->ss_rsp);
 				fprintf(stderr, "rsp:%s, len:%d\n", eng->ss_rsp, len);
@@ -89,7 +89,7 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 
 		case LWS_CALLBACK_CLOSED:
 			{
-				lwsl_user("LWS_CALLBACK_CLOSED\n");
+				lwsl_notice("LWS_CALLBACK_CLOSED\n");
 				//ws_client->valid = -1;
 
 

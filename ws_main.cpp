@@ -47,8 +47,8 @@ int lws_worker()
 	signal(SIGINT, sigint_handler);
 
 	lws_set_log_level(logs, NULL);
-	lwsl_user("LWS minimal ws client echo + permessage-deflate + multifragment bulk message\n");
-	lwsl_user("   lws-minimal-ws-client-echo [-n (no exts)] [-p port] [-o (once)]\n");
+	lwsl_notice("LWS minimal ws client echo + permessage-deflate + multifragment bulk message\n");
+	lwsl_notice("   lws-minimal-ws-client-echo [-n (no exts)] [-p port] [-o (once)]\n");
 
 
 
@@ -67,7 +67,7 @@ int lws_worker()
 
 	lws_context_destroy(context);
 
-	lwsl_user("Completed %s\n", interrupted == 2 ? "OK" : "failed");
+	lwsl_notice("Completed %s\n", interrupted == 2 ? "OK" : "failed");
 
 	return interrupted != 2;
 }
