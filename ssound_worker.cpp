@@ -359,62 +359,6 @@ const char * state2str(int state){
 
 
 
-/*
-
-   void start_engine_threads(){
-//decoder = Siren7_NewDecoder(16000);
-for(int i=0; i<ENG_N; i++){
-engines[i].engine = NULL;
-engines[i].state=ENG_STATE_IDLE;
-engines[i].ws_client=nullptr;
-engines[i].decoder= Siren7_NewDecoder(16000);
-engines[i].t = std::thread(eval_worker, &engines[i]);
-}
-}
-void notify_engine_threads(){
-
-for(int i=0; i<ENG_N; i++){
-if(engines[i].t.joinable()){
-engines[i].cv.notify_all();
-}
-}
-}
-void join_engine_threads(){
-//Siren7_CloseDecoder(decoder);
-for(int i=0; i<ENG_N; i++){
-if(engines[i].t.joinable()){
-engines[i].t.join();
-}
-}
-}
-
-
-
-
-//need a mutex???
-void push_to_idle_worker(ws_client_t * ws_client){
-int i=0;
-for(i=0; i < ENG_N; i++){
-if(engines[i].state == ENG_STATE_IDLE){
-ws_client->engine = &(engines[i]);
-engines[i].ws_client = ws_client;
-engines[i].state = ENG_STATE_OCCUPIED;
-engines[i].action = ACTION_NULL;
-engines[i].buflen = 0;
-engines[i].ss_binary_len = 0;
-engines[i].valid = 1;
-break;
-}
-}
-
-if(i == ENG_N){
-lwsl_err("Drop ws client,engine already  overloaded");
-}else{
-engines[i].cv.notify_one();
-}
-
-}
- */
 
 
 int handleMessage(ws_client_t * ws_client, void * in, int len){
