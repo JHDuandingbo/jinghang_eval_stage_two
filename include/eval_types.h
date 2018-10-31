@@ -14,21 +14,51 @@ extern "C"
 typedef struct websockets_client {
 	struct lws *wsi;
 	int incoming_len;								
-	//	char buffer[20*BUFSIZ];
-	//	int  buflen;
-	//	int msg_ok;
-	//	int binary;
-	int type;
-	volatile int valid;
+	//int type;
+/////////////////////////
+	struct ssound * engine;
+	char buffer[20*BUFSIZ];
+	int  buflen;
+	//started working, stopped, null;   null------>started->working->stopped->null
+	int state;
 
-	void * engine;
+
+
+
+	//char type[256];
+	FILE *fp;
+	SirenDecoder decoder;
+
+
+	char core_type[256];
+	char refText[256];
+	int  got_ref_text;
+	char user_data[BUFSIZ];
+	int  got_user_data;
+
+
+	char ss_binary[40*BUFSIZ];
+	int  ss_binary_len;
+	char ss_start[BUFSIZ];
+	char ss_stop[BUFSIZ];
+	char ss_cancel[BUFSIZ];
+	char ss_rsp[20*BUFSIZ];
+
+
+	//int msg_ok;
+	int action;//0:start, 1:binary,2:stop
+	int valid;
+	int binary;
+	int compressed;
+
 } ws_client_t;
 
 
 #define ENG_N 20
 #define ENG_STATE_IDLE  0
-#define ENG_STATE_OCCUPIED  1
-#define ENG_STATE_STARTED 2
+#define ENG_STATE_STARTED  1
+#define ENG_STATE_STOPPED  2
+#define ENG_STATE_CANCELLED  3
 
 #define ACTION_NULL -1
 #define ACTION_START 0

@@ -11,9 +11,6 @@
 
 #define LWS_PLUGIN_STATIC
 extern int  handle_message(ws_client_t * ws_client, void * in, int len);
-extern void start_engine_threads();
-extern void join_engine_threads();
-extern void notify_engine_threads();
 
 static struct lws_protocols protocols[] = {
 	LWS_PLUGIN_PROTOCOL_MINIMAL_SERVER_ECHO,
@@ -27,10 +24,9 @@ void sigint_handler(int sig)
 {
 	interrupted = 1;
 
-	notify_engine_threads();
 }
 
-int lws_worker()
+int main(int argc, const char **argv)
 {
 	std::cout<<"lws_worker pid:"<< std::this_thread::get_id()<<std::endl;
 	struct lws_context_creation_info info;
@@ -71,15 +67,4 @@ int lws_worker()
 	lwsl_notice("Completed %s\n", interrupted == 2 ? "OK" : "failed");
 
 	return interrupted != 2;
-}
-
-int main(int argc, const char **argv)
-{
-	std::thread t (lws_worker);
-
-	start_engine_threads();
-	join_engine_threads();
-
-	t.join();
-	puts("after join");
 }
