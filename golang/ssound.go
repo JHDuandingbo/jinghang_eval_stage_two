@@ -80,7 +80,7 @@ func ssoundCallback(v unsafe.Pointer,  msg *C.char, size C.int){
 	//c := (*Client)(userData);
 	c := pointer.Restore(v).(*Client)
 	gmsg := C.GoStringN(msg, size)
-	log.Printf("client id:%s, RSP:%s\n", c.id,gmsg)
+	//log.Printf("client id:%s, RSP:%s\n", c.id,gmsg)
 
 	var msgObj map[string]interface{}
 	if err := json.Unmarshal([]byte( gmsg), &msgObj); err != nil {
@@ -94,6 +94,7 @@ func ssoundCallback(v unsafe.Pointer,  msg *C.char, size C.int){
 	evalRsp["errId"] = 0
 	evalRsp["userId"] = "guest"
 	evalRsp["userData"] = c.userData
+	evalRsp["coreType"] = c.coreType
 	evalRsp["ts"] = strconv.FormatInt(time.Now().Unix(), 10)
 	if nil != err {
 		evalRsp["errMsg"]=msgObj["error"].(string)

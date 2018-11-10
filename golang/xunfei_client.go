@@ -44,11 +44,11 @@ func GetXFURI() string {
 //func startXunFei(done chan string, conn *websocket.Conn){
 
 func startXunFei(c *Client){
-	done := c.XFDone
+	//done := c.XFDone
 	conn := c.XFConn
 	go func() {
 		defer conn.Close()
-		defer close(done)
+		//defer close()
 		total := ""
 		for {
 			result := ""
@@ -89,15 +89,18 @@ func startXunFei(c *Client){
 			}
 		}
 		log.Println("XunFei total result:" , total)
-		done <- total
+		c.XFDone <- total
+		close(c.XFDone)
 	}()
 }
 
 //func feedXunFei(conn *websocket.Conn, data []byte ){
 func feedXunFei(c *Client, data []byte ){
 
-	c.XFBuffer = append(c.XFBuffer, data...)
 	BatchSize := 1280
+	c.XFBuffer = append(c.XFBuffer, data...)
+	
+	log.Println("feedXunFei,buffer len:", len(c.XFBuffer))
 	if c.XFStarted == true && len(c.XFBuffer) >= BatchSize {
 	////log.Println("feedXunFei")
 		err := c.XFConn.WriteMessage(websocket.BinaryMessage,c.XFBuffer[:BatchSize])
@@ -109,7 +112,32 @@ func feedXunFei(c *Client, data []byte ){
 	}
 
 }
-func stopXunFei(conn *websocket.Conn){
+//func stopXunFei(conn *websocket.Conn){
+func stopXunFei(c *Client){
+
+
+	BatchSize := 1280
+	for len(c.XFBuffer) >0 {
+		if len(c.XFBuffer) > BatchSize {
+			err := c.XFConn.WriteMessage(websocket.BinaryMessage,c.XFBuffer[:BatchSize])
+			if err != nil {
+				log.Println("write XunFei:", err)
+				return
+			}
+			c.XFBuffer = c.XFBuffer[BatchSize:]
+
+		}else{
+			err := c.XFConn.WriteMessage(websocket.BinaryMessage,c.XFBuffer)
+			if err != nil {
+				log.Println("write XunFei:", err)
+				return
+			}
+			c.XFBuffer = []byte{}
+
+		}
+	}
+
+	conn:= c.XFConn
 	log.Println("stopXunfei")
 	stopMsg := `{"end":true}`
 	err := conn.WriteMessage(websocket.TextMessage, []byte(stopMsg))
@@ -119,127 +147,3 @@ func stopXunFei(conn *websocket.Conn){
 
 }
 
-/*
-func main() {
-	flag.Parse()
-	log.SetFlags(0)
-
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-
-	//u := url.URL{Scheme: "ws", Host: *addr, Path: "/echo"}
-	//log.Printf("connecting to %s", u.String())
-	//xunfeiConn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	//xunfeiConn, _, err := websocket.DefaultDialer.Dial(GetXFURI(), nil)
-	//url:="wss://api.iflyrec.com/ast?lang=en&codec=pcm_s16le&bitrate=16000&authString=v1.0%2CTiD3p6%2CHGTBv4hFj9%2C2018-11-06T18%3A02%3A21%2B0800%2C1c5bc7f3-dde1-4b5d-93e9-498c063914d8%2CViqH6i%2BKAYpPhUhaB58De/UNlL0%3D"
-	xunfeiConn, _, err := websocket.DefaultDialer.Dial(GetXFURI(), nil)
-	
-	if err != nil {
-		log.Fatal("dial:", err)
-	}
-	defer xunfeiConn.Close()
-
-	done := make(chan struct{})
-
-	go func() {
-		defer close(done)
-		total := ""
-		for {
-			result := ""
-			_, message, err := xunfeiConn.ReadMessage()
-			if err != nil {
-				log.Println("read:", err)
-				break
-			}
-			//log.Printf("recv: %s", message)
-			rspObj := make(map[string]interface{})
-			json.Unmarshal([]byte(message), &rspObj)
-			if nil != rspObj["action"]  {
-				log.Println("connected to server")
-			}else{
-				if rspObj["cn"] != nil{
-					cn := rspObj["cn"].(map[string]interface{})
-					st := cn["st"].(map[string]interface{})
-					rtArr := st["rt"].([]interface{})
-					resType := st["type"].(string)
-					for _,rtItem := range rtArr{
-						wsArr := rtItem.(map[string]interface{})["ws"].([]interface{})
-						for _,wsItem := range wsArr{
-							cwArr :=  wsItem.(map[string]interface{})["cw"].([]interface{})
-							for _, cwItem := range cwArr{
-								word := cwItem.(map[string]interface{})["w"].(string)
-								result += word
-							}
-						}
-					}
-					log.Println("\n-----------\n"+result)
-					if(resType == "0"){
-						total += result
-					}
-				}else{
-				
-					log.Printf("recv illegal: %s", message)
-				}
-			}
-		}
-		log.Println("total:" , total)
-	}()
-
-	//ticker := time.NewTicker(time.Second)
-	ticker := time.NewTicker(time.Millisecond * 70)
-	defer ticker.Stop()
-
-
-	f,err:=os.Open("./foo.pcm")
-	if err != nil{
-					log.Println("open file failed:", err)
-					return
-	}
-	defer f.Close()
-
-	sum := 0
-	buffer := make([]byte, 3200)
-	isStopped :=false
-
-	for {
-		select {
-		case <-done:
-			return
-		case <-ticker.C:
-				if  isStopped== false {
-					n,err := f.Read(buffer)
-					if err != nil {
-						//log.Println("read file end:", err)
-						stopMsg := `{"end":true}`
-						err := xunfeiConn.WriteMessage(websocket.TextMessage, []byte(stopMsg))
-						if err != nil {
-							log.Println("write:", err)
-						//	return
-						}
-						isStopped = true
-						//return
-					}
-					err = xunfeiConn.WriteMessage(websocket.BinaryMessage,buffer[:n])
-					if err != nil {
-						log.Println("write:", err)
-						return
-					}
-					sum += n
-				}
-		case <-interrupt:
-			log.Println("interrupt")
-			err := xunfeiConn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			if err != nil {
-				log.Println("write close:", err)
-				return
-			}
-			select {
-				case <-done:
-				case <-time.After(time.Second):
-			}
-			return
-		}
-	}
-}
-
-*/

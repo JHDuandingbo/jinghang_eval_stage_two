@@ -36,11 +36,10 @@ func my_callback(v string) {
 }
 
 func main() {
-    C._register_callback(pointer.Save(&Callback{
-        Func:     my_callback,
-        UserData: "my-callback",
-    }))
-    C.wait_event()
+	foo := []byte{}
+	fmt.Println(len(foo))
+	foo = append(foo,1)
+	fmt.Println(len(foo))
 }
 
 //export cb_proxy

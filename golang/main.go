@@ -12,6 +12,7 @@ import (
 
 var addr = flag.String("addr", ":3001", "http service address")
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
 	hub := newHub()
 	go hub.run()

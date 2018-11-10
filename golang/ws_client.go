@@ -9,6 +9,10 @@ import (
 	"net"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
+	"strconv"
+	"io/ioutil"
 	"time"
 	"encoding/json"
         //"github.com/mattn/go-pointer"
@@ -31,6 +35,8 @@ const (
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024 * 10*10
+
+	similarityURL= "http://140.143.138.146:6000/similarity"
 )
 
 var (
@@ -96,9 +102,12 @@ func (c *Client) readMessage() {
 		msgType, message, err := c.conn.ReadMessage()
 		//log.Println("Got ReadMessage")
 		if err != nil {
+			log.Printf("read ws error: %v", err)
+	/*
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("read ws error: %v", err)
 			}
+*/
 			break
 		}else{
 			if(msgType == websocket.TextMessage){
@@ -110,29 +119,31 @@ func (c *Client) readMessage() {
 				//msg := _msg.(map[string]interface{})
 				switch msg["action"].(string){
 					case "start":
-						log.Println("start eval")
 						if msg["userData"] != nil{
 							c.userData   = msg["userData"].(string)
 						}
 						c.sessionId = msg["sessionId"].(string)
 						c.compressed = int(msg["compressed"].(float64))
 						c.request = msg["request"].(map[string]interface{})
-						c.coreType   = c.request["coreType"].(string)
+						coreType   := c.request["coreType"]
+						if nil == coreType {
+							return
+						}
+						c.coreType   = coreType.(string)
 						switch c.coreType{
 							case "en.sent.score", "en.word.score", "en.pict.score":
 								c.engine = startEngine(c)
 							case "en.pqan.score":
 								XFDone  := make(chan string)
-								XFConn, _, err := websocket.DefaultDialer.Dial(GetXFURI(), nil)
+								uri := GetXFURI()
+								XFConn, _, err := websocket.DefaultDialer.Dial(uri, nil)
 								if err != nil {
-									log.Fatal("fail to connect to xunfei, error:", err)
+									log.Fatal("fail to connect to xunfei, error:", err, " uri:" , uri)
 								}
 								c.XFDone = XFDone
 								c.XFConn = XFConn
 								c.XFStarted = false
 								c.XFBuffer = make([]byte, 8192)
-								//c.XFBin = make(chan []byte, 8192)
-								//startXunFei(c.XFDone, c.XFConn)
 								startXunFei(c)
 						}
 					case "stop":
@@ -140,16 +151,57 @@ func (c *Client) readMessage() {
 							case "en.sent.score", "en.word.score", "en.pict.score":
 								stopEngine(c.engine)
 							case "en.pqan.score":
-								stopXunFei(c.conn)
+								stopXunFei(c)
 								timer := time.NewTimer(time.Second * 10)
 								select {
 									case <- timer.C:
 										log.Println("xunfei response timeout!")
 									case xunfeiRsp:= <- c.XFDone:
 										log.Println("xunfei response ", xunfeiRsp)
-										//go to similarity 
-										//and sent similarity rsp to c.send
-										c.send <- []byte( xunfeiRsp)
+										//c.send <- []byte( xunfeiRsp)
+										formData := url.Values{}
+										formData.Set("rank", "5")
+										formData.Set("requestTexts", xunfeiRsp)
+									        imArr := c.request["lm"].([]interface{})
+										for _,imItem := range imArr{
+											imObj := imItem.(map[string]interface{})
+											imStr := imObj["text"].(string)
+											imStr = strings.TrimSpace(imStr)
+											formData.Add("implications", imStr)
+										}
+										log.Println("nlp formData:", formData)
+										log.Println("similarity url:" , similarityURL)
+										rsp, err := http.PostForm(similarityURL, formData)
+										if err != nil {
+											log.Fatalln(err)
+										}
+
+										defer rsp.Body.Close()
+										body, err := ioutil.ReadAll(rsp.Body)
+										log.Println(string(body))
+
+										//json.NewDecoder(rsp.Body).Decode(&result)
+										var rspObj map[string]interface{}
+										if err:=json.Unmarshal(body,&rspObj); err!= nil{
+												panic(err)
+										}
+										similarity := rspObj["similarity"].(float64)
+										log.Println("similarity: " , similarity)
+										evalRsp   := make(map[string]interface{})
+										resultObj := make(map[string]interface{})
+										evalRsp["result"] = resultObj
+										evalRsp["errId"] = 0
+										evalRsp["errMsg"] = nil
+										evalRsp["userData"] = c.userData
+										evalRsp["userId"] = "guest"
+										evalRsp["coreType"] = c.coreType
+										evalRsp["ts"] = strconv.FormatInt(time.Now().Unix(), 10)
+
+										resultObj["scoreProStress"] =strconv.FormatFloat(similarity, 'f', -1, 32)
+										resultObj["scoreProFluency"] =resultObj["scoreProStress"]
+										resultObj["scoreProNoAccent"] =resultObj["scoreProStress"]
+										finalRspStr,_ := json.Marshal(evalRsp)
+										c.send<- []byte(finalRspStr)
 								}
 						}
 
@@ -164,14 +216,12 @@ func (c *Client) readMessage() {
 						case "en.sent.score", "en.word.score", "en.pict.score":
 							feedEngine(c.engine, message)
 						case "en.pqan.score":
-							//feedXunFei(c.XFConn, message)
-							//c.XFBin <- message
 							feedXunFei(c, message)
 				}
 
 			}
 		}
-	}
+	}//end for
 }
 
 
@@ -200,7 +250,7 @@ func (c *Client) writeMessage() {
 			if err != nil {
 				return
 			}
-			log.Println("send rsp:" , string(message))
+			log.Println("RSP:" , string(message))
 			w.Write(message)
 
 			// Add queued chat messages to the current websocket message.
