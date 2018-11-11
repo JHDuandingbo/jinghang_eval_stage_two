@@ -57,7 +57,7 @@ func startXunFei(c *Client){
 				log.Println("xunfei read error:", err)
 				break
 			}
-			log.Println("Got xunfei rsp:", string(message))
+			//log.Println("Got xunfei rsp:", string(message))
 			rspObj := make(map[string]interface{})
 			json.Unmarshal([]byte(message), &rspObj)
 			if nil != rspObj["action"]  {
@@ -79,7 +79,7 @@ func startXunFei(c *Client){
 							}
 						}
 					}
-					log.Println("\n-----------\n"+result)
+					//log.Println("\n-----------\n"+result)
 					if(resType == "0"){
 						total += result
 					}
@@ -100,7 +100,7 @@ func feedXunFei(c *Client, data []byte ){
 	BatchSize := 1280
 	c.XFBuffer = append(c.XFBuffer, data...)
 	
-	log.Println("feedXunFei,buffer len:", len(c.XFBuffer))
+//	log.Println("feedXunFei,buffer len:", len(c.XFBuffer))
 	if c.XFStarted == true && len(c.XFBuffer) >= BatchSize {
 	////log.Println("feedXunFei")
 		err := c.XFConn.WriteMessage(websocket.BinaryMessage,c.XFBuffer[:BatchSize])

@@ -114,9 +114,25 @@ func ssoundCallback(v unsafe.Pointer,  msg *C.char, size C.int){
 				resultObj["scoreProStress"] = strconv.FormatFloat(ssResult["rhythm"].(map[string]interface{})["stress"].(float64), 'f',-1,32)
 				resultObj["scoreProFluency"] = strconv.FormatFloat(ssResult["fluency"].(map[string]interface{})["overall"].(float64), 'f',-1,32)
 				resultObj["scoreProNoAccent"] = strconv.FormatFloat(ssResult["pron"].(float64), 'f', -1, 32)
+				badWordIndex :=[]interface{}{}
+				missingWordIndex :=[]interface{}{}
+				details := ssResult["details"].([]interface{})
+				for i,item := range details{
+					score:=item.(map[string]interface{})["score"].(float64)
+					if score < 3 {
+						badWordIndex = append(badWordIndex, strconv.FormatInt(int64(i+1), 10))
+					}
+					
+				}
+				resultObj["missingWordIndex"] = missingWordIndex
+				resultObj["badWordIndex"] = badWordIndex
 			case "en.word.score":
 				resultObj["sentence"] =c.request["refText"].(string) 
 				resultObj["scoreProNoAccent"] = strconv.FormatFloat(ssResult["pron"].(float64), 'f', -1, 32)
+				resultObj["scoreProStress"] = resultObj["scoreProNoAccent"]
+				resultObj["scoreProFluency"] = resultObj["scoreProNoAccent"]
+			case "en.pict.score":
+				resultObj["scoreProNoAccent"] = strconv.FormatFloat(ssResult["overall"].(float64), 'f', -1, 32)
 				resultObj["scoreProStress"] = resultObj["scoreProNoAccent"]
 				resultObj["scoreProFluency"] = resultObj["scoreProNoAccent"]
 		}

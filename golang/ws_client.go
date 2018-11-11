@@ -25,9 +25,7 @@ const (
 	writeWait = 10 * time.Second
 
 	// Time allowed to read the next pong message from the peer.
-	//pongWait = 60 * time.Second
-	pongWait = 5 * time.Second
-	//idleMax = 5 * time.Second
+	pongWait = 60 * time.Second
 
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
@@ -122,7 +120,9 @@ func (c *Client) readMessage() {
 						if msg["userData"] != nil{
 							c.userData   = msg["userData"].(string)
 						}
-						c.sessionId = msg["sessionId"].(string)
+						if msg["sessionId"] != nil{
+							c.sessionId = msg["sessionId"].(string)
+						}
 						c.compressed = int(msg["compressed"].(float64))
 						c.request = msg["request"].(map[string]interface{})
 						coreType   := c.request["coreType"]
@@ -133,7 +133,7 @@ func (c *Client) readMessage() {
 						switch c.coreType{
 							case "en.sent.score", "en.word.score", "en.pict.score":
 								c.engine = startEngine(c)
-							case "en.pqan.score":
+							case "en.pqan.score", "en.sim.score":
 								XFDone  := make(chan string)
 								uri := GetXFURI()
 								XFConn, _, err := websocket.DefaultDialer.Dial(uri, nil)
@@ -150,7 +150,7 @@ func (c *Client) readMessage() {
 						switch c.coreType{
 							case "en.sent.score", "en.word.score", "en.pict.score":
 								stopEngine(c.engine)
-							case "en.pqan.score":
+							case "en.pqan.score", "en.sim.score":
 								stopXunFei(c)
 								timer := time.NewTimer(time.Second * 10)
 								select {
@@ -162,12 +162,25 @@ func (c *Client) readMessage() {
 										formData := url.Values{}
 										formData.Set("rank", "5")
 										formData.Set("requestTexts", xunfeiRsp)
-									        imArr := c.request["lm"].([]interface{})
-										for _,imItem := range imArr{
-											imObj := imItem.(map[string]interface{})
-											imStr := imObj["text"].(string)
-											imStr = strings.TrimSpace(imStr)
-											formData.Add("implications", imStr)
+									
+										imArr := []interface{}{}
+										if c.coreType == "en.sim.score" {
+											imArr = c.request["implications"].([]interface{})
+											for _,imItem := range imArr{
+												//imObj := imItem.(map[string]interface{})
+												imStr := imItem.(string)
+												imStr = strings.TrimSpace(imStr)
+												formData.Add("implications", imStr)
+											}
+
+										}else{
+											imArr = c.request["lm"].([]interface{})
+											for _,imItem := range imArr{
+												imObj := imItem.(map[string]interface{})
+												imStr := imObj["text"].(string)
+												imStr = strings.TrimSpace(imStr)
+												formData.Add("implications", imStr)
+											}
 										}
 										log.Println("nlp formData:", formData)
 										log.Println("similarity url:" , similarityURL)
@@ -215,7 +228,7 @@ func (c *Client) readMessage() {
 				switch c.coreType{
 						case "en.sent.score", "en.word.score", "en.pict.score":
 							feedEngine(c.engine, message)
-						case "en.pqan.score":
+						case "en.pqan.score", "en.sim.score":
 							feedXunFei(c, message)
 				}
 
