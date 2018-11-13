@@ -44,7 +44,6 @@ func GetXFURI() string {
 //func startXunFei(done chan string, conn *websocket.Conn){
 
 func startXunFei(c *Client){
-	//done := c.XFDone
 	conn := c.XFConn
 	go func() {
 		defer conn.Close()
@@ -54,7 +53,7 @@ func startXunFei(c *Client){
 			result := ""
 			_, message, err := conn.ReadMessage()
 			if err != nil {
-				log.Println("xunfei read error:", err)
+				log.Println("xunfei ReadMessage:", err)
 				break
 			}
 			//log.Println("Got xunfei rsp:", string(message))
@@ -89,8 +88,10 @@ func startXunFei(c *Client){
 			}
 		}
 		log.Println("XunFei total result:" , total)
-		c.XFDone <- total
-		close(c.XFDone)
+		if c.valid {
+			c.XFDone <- total
+			close(c.XFDone)
+		}
 	}()
 }
 

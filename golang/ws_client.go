@@ -91,6 +91,7 @@ func (c *Client) readMessage() {
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
+		c.valid =false
 		log.Printf(":%s disconnected, duration:%f seconds", c.id,  time.Since(c.inTime).Seconds())
 	}()
 	//c.conn.SetReadLimit(maxMessageSize)
@@ -141,22 +142,27 @@ func (c *Client) readMessage() {
 							case "en.pqan.score", "en.sim.score":
 
 								var XFConn *websocket.Conn
-								for i:=0; i < 2; i++{
+								for i:=0; i < 5; i++{
 									uri := GetXFURI()
 									XFConn, _, err = websocket.DefaultDialer.Dial(uri, nil)
 									if err != nil {
 										log.Println("fail to connect to xunfei, error:", err, " uri:" , uri)
+										time.Sleep(10 * time.Millisecond)
 									}else{
 										break;
 									}
 								}
 
-								XFDone  := make(chan string)
-								c.XFDone = XFDone
-								c.XFConn = XFConn
-								c.XFStarted = false
-								c.XFBuffer = make([]byte, 8192)
-								startXunFei(c)
+								if nil != XFConn {
+									XFDone  := make(chan string)
+									c.XFDone = XFDone
+									c.XFConn = XFConn
+									c.XFStarted = false
+									c.XFBuffer = make([]byte, 8192)
+									startXunFei(c)
+								}else{
+									log.Println("still still  fail to connect to xunfei, error:");
+								}
 						}
 					case "stop":
 						switch c.coreType{
