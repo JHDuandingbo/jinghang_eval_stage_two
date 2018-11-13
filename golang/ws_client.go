@@ -123,7 +123,11 @@ func (c *Client) readMessage() {
 						if msg["sessionId"] != nil{
 							c.sessionId = msg["sessionId"].(string)
 						}
-						c.compressed = int(msg["compressed"].(float64))
+						if msg["compressed"] != nil{
+							c.compressed = int(msg["compressed"].(float64))
+						}else{
+							c.compressed =  0
+						}
 						c.request = msg["request"].(map[string]interface{})
 						coreType   := c.request["coreType"]
 						if nil == coreType {
@@ -191,14 +195,16 @@ func (c *Client) readMessage() {
 
 										defer rsp.Body.Close()
 										body, err := ioutil.ReadAll(rsp.Body)
-										log.Println(string(body))
+										log.Println("nlp response:", string(body))
 
 										//json.NewDecoder(rsp.Body).Decode(&result)
 										var rspObj map[string]interface{}
+										var similarity  = 3.3
 										if err:=json.Unmarshal(body,&rspObj); err!= nil{
-												panic(err)
+											log.Println("Parse nlp similarity failed:",  err)
+										}else{
+											similarity  = rspObj["similarity"].(float64)
 										}
-										similarity := rspObj["similarity"].(float64)
 										log.Println("similarity: " , similarity)
 										evalRsp   := make(map[string]interface{})
 										resultObj := make(map[string]interface{})
@@ -215,6 +221,7 @@ func (c *Client) readMessage() {
 										resultObj["scoreProNoAccent"] =resultObj["scoreProStress"]
 										finalRspStr,_ := json.Marshal(evalRsp)
 										c.send<- []byte(finalRspStr)
+										close(c.send)
 								}
 						}
 
@@ -311,7 +318,8 @@ func getIpPort(req * http.Request)(string){
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		log.Println("serveWs upgrade error:", err)
+		
 		return
 	}
 	client := &Client{hub: hub,inTime:time.Now(), conn: conn, id: getIpPort(r),  send: make(chan []byte, 256)}
