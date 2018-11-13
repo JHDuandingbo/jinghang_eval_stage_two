@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	addr := "0.0.0.0:3001"
+	addr := "0.0.0.0:3000"
 	log.Println("Server listen addr ", addr)
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)

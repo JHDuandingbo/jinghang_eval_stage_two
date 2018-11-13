@@ -38,8 +38,9 @@ func (h *Hub) run() {
 			log.Printf("current clients:%d\n",  len(h.clients))
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
+				client.valid = false
 				delete(h.clients, client)
-				//close(client.send)
+				close(client.send)
 				log.Printf("delete  %s from hub, current clients:%d\n", client.id, len(h.clients))
 			}
 		/*

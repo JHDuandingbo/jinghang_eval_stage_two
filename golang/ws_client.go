@@ -55,6 +55,7 @@ type Client struct {
 	conn *websocket.Conn
 
 	//refText string
+	valid bool
 	coreType string
 	request map[string]interface{}
 	sessionId string
@@ -100,7 +101,7 @@ func (c *Client) readMessage() {
 		msgType, message, err := c.conn.ReadMessage()
 		//log.Println("Got ReadMessage")
 		if err != nil {
-			log.Printf("read ws error: %v", err)
+			log.Printf("ws.ReadMessage: %v", err)
 	/*
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("read ws error: %v", err)
@@ -138,12 +139,19 @@ func (c *Client) readMessage() {
 							case "en.sent.score", "en.word.score", "en.pict.score":
 								c.engine = startEngine(c)
 							case "en.pqan.score", "en.sim.score":
-								XFDone  := make(chan string)
-								uri := GetXFURI()
-								XFConn, _, err := websocket.DefaultDialer.Dial(uri, nil)
-								if err != nil {
-									log.Fatal("fail to connect to xunfei, error:", err, " uri:" , uri)
+
+								var XFConn *websocket.Conn
+								for i:=0; i < 2; i++{
+									uri := GetXFURI()
+									XFConn, _, err = websocket.DefaultDialer.Dial(uri, nil)
+									if err != nil {
+										log.Println("fail to connect to xunfei, error:", err, " uri:" , uri)
+									}else{
+										break;
+									}
 								}
+
+								XFDone  := make(chan string)
 								c.XFDone = XFDone
 								c.XFConn = XFConn
 								c.XFStarted = false
@@ -220,8 +228,10 @@ func (c *Client) readMessage() {
 										resultObj["scoreProFluency"] =resultObj["scoreProStress"]
 										resultObj["scoreProNoAccent"] =resultObj["scoreProStress"]
 										finalRspStr,_ := json.Marshal(evalRsp)
-										c.send<- []byte(finalRspStr)
-										close(c.send)
+										if true == c.valid {
+											c.send<- []byte(finalRspStr)
+										}
+										//close(c.send)
 								}
 						}
 
@@ -322,7 +332,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		
 		return
 	}
-	client := &Client{hub: hub,inTime:time.Now(), conn: conn, id: getIpPort(r),  send: make(chan []byte, 256)}
+	client := &Client{hub: hub,inTime:time.Now(), conn: conn, id: getIpPort(r),  valid:true, send: make(chan []byte, 256)}
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in

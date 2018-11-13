@@ -140,8 +140,11 @@ func ssoundCallback(v unsafe.Pointer,  msg *C.char, size C.int){
 	
 	
 	evalRspStr,_ := json.Marshal(evalRsp)
-	c.send<- []byte(evalRspStr)
-	close(c.send)
+	if c.valid == true{
+		c.send<- []byte(evalRspStr)
+	}
+		
+	//close(c.send)
 	
 }
 func startEngine(c *Client) *C.struct_ssound {
