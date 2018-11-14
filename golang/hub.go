@@ -4,6 +4,7 @@
 
 package main
 import "log"
+import "time"
 
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
@@ -37,11 +38,13 @@ func (h *Hub) run() {
 			h.clients[client] = true
 			log.Printf("current clients:%d\n",  len(h.clients))
 		case client := <-h.unregister:
+			log.Printf("try delete clients:%s\n", client.id)
 			if _, ok := h.clients[client]; ok {
 				client.valid = false
+				client.conn.Close()
 				delete(h.clients, client)
-				close(client.send)
-				log.Printf("delete  %s from hub, current clients:%d\n", client.id, len(h.clients))
+				log.Printf(":%s disconnected, duration:%f seconds,delete it", client.id,  time.Since(client.inTime).Seconds())
+				//log.Printf("delete  %s from hub, current clients:%d\n", client.id, len(h.clients))
 			}
 		/*
 		case message := <-h.broadcast:

@@ -6,24 +6,29 @@ package main
 
 import (
 //	"flag"
-	//"os"
+	"os"
 	"log"
+//	"time"
 	"net/http"
 )
 
 func main() {
-	addr := "0.0.0.0:3000"
+
+	args := os.Args
+
+	if 2 != len(args){
+		log.Fatal("Usage:%s <port>");
+	}
+	
+	addr := "0.0.0.0:" + args[1]
 	log.Println("Server listen addr ", addr)
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	//addr := flag.String("addr", "3001", "http service address")
-	//flag.Parse()
 	hub := newHub()
 	go hub.run()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
-	//err := http.ListenAndServe(*addr, nil)
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

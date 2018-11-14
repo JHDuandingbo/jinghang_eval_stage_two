@@ -41,17 +41,42 @@ func GetXFURI() string {
 
 }
 
-//func startXunFei(done chan string, conn *websocket.Conn){
 
 func startXunFei(c *Client){
-	conn := c.XFConn
+	//var XFConn *websocket.Conn
+	uri := GetXFURI()
+	XFConn, _, err := websocket.DefaultDialer.Dial(uri, nil)
+	if err != nil {
+		for i:=0; i < 5; i++{
+			uri := GetXFURI()
+			XFConn, _, err  = websocket.DefaultDialer.Dial(uri, nil)
+			if err != nil {
+				log.Println("fail to connect to xunfei, error:", err, " uri:" , uri)
+				time.Sleep(20 * time.Millisecond)
+			}else{
+				break;
+			}
+		}
+	}
+
+	//if nil == XFConn 
+	if err != nil{
+		log.Println("still still  fail to connect to xunfei, error:");
+		return
+	}
+	XFDone  := make(chan string)
+	c.XFDone = XFDone
+	c.XFConn = XFConn
+	c.XFStarted = false
+	c.XFBuffer = make([]byte, 8192)
+
 	go func() {
-		defer conn.Close()
-		//defer close()
+		defer XFConn.Close()
+		defer close(XFDone)
 		total := ""
 		for {
 			result := ""
-			_, message, err := conn.ReadMessage()
+			_, message, err := XFConn.ReadMessage()
 			if err != nil {
 				log.Println("xunfei ReadMessage:", err)
 				break
@@ -88,14 +113,10 @@ func startXunFei(c *Client){
 			}
 		}
 		log.Println("XunFei total result:" , total)
-		if c.valid {
-			c.XFDone <- total
-			close(c.XFDone)
-		}
+	        XFDone <- total
 	}()
 }
 
-//func feedXunFei(conn *websocket.Conn, data []byte ){
 func feedXunFei(c *Client, data []byte ){
 
 	BatchSize := 1280
@@ -113,9 +134,11 @@ func feedXunFei(c *Client, data []byte ){
 	}
 
 }
-//func stopXunFei(conn *websocket.Conn){
 func stopXunFei(c *Client){
 
+	if c.valid == false {
+		return
+	}
 
 	BatchSize := 1280
 	for len(c.XFBuffer) >0 {

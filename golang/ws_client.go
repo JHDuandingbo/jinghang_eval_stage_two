@@ -9,10 +9,10 @@ import (
 	"net"
 	"log"
 	"net/http"
-	"net/url"
-	"strings"
-	"strconv"
-	"io/ioutil"
+	//"net/url"
+	//"strings"
+	//"strconv"
+	//"io/ioutil"
 	"time"
 	"encoding/json"
         //"github.com/mattn/go-pointer"
@@ -23,17 +23,14 @@ import (
 const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
-
 	// Time allowed to read the next pong message from the peer.
-	pongWait = 60 * time.Second
-
+	pongWait = 10 * time.Second
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 	//sendP = (idleMax * 9) / 10
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024 * 10*10
-
 	similarityURL= "http://140.143.138.146:6000/similarity"
 )
 
@@ -90,12 +87,9 @@ func (c *Client) readMessage() {
 	log.Printf("handle reading for client:%s\n", c.id)
 	defer func() {
 		c.hub.unregister <- c
-		c.conn.Close()
-		c.valid =false
-		log.Printf(":%s disconnected, duration:%f seconds", c.id,  time.Since(c.inTime).Seconds())
 	}()
-	//c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		//log.Println("before ReadMessage")
@@ -103,20 +97,14 @@ func (c *Client) readMessage() {
 		//log.Println("Got ReadMessage")
 		if err != nil {
 			log.Printf("ws.ReadMessage: %v", err)
-	/*
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("read ws error: %v", err)
-			}
-*/
 			break
 		}else{
 			if(msgType == websocket.TextMessage){
-				log.Printf("recv text: %s\n", string(message))
+				//log.Printf("recv text: %s\n", string(message))
 				var msg map[string]interface{}
 				if err := json.Unmarshal(message, &msg); err != nil {
 						panic(err)
 				}
-				//msg := _msg.(map[string]interface{})
 				switch msg["action"].(string){
 					case "start":
 						if msg["userData"] != nil{
@@ -137,111 +125,14 @@ func (c *Client) readMessage() {
 						}
 						c.coreType   = coreType.(string)
 						switch c.coreType{
-							case "en.sent.score", "en.word.score", "en.pict.score":
+							case "en.sent.score", "en.word.score", "en.pict.score","en.pqan.score", "en.sim.score":
 								c.engine = startEngine(c)
-							case "en.pqan.score", "en.sim.score":
-
-								var XFConn *websocket.Conn
-								for i:=0; i < 5; i++{
-									uri := GetXFURI()
-									XFConn, _, err = websocket.DefaultDialer.Dial(uri, nil)
-									if err != nil {
-										log.Println("fail to connect to xunfei, error:", err, " uri:" , uri)
-										time.Sleep(10 * time.Millisecond)
-									}else{
-										break;
-									}
-								}
-
-								if nil != XFConn {
-									XFDone  := make(chan string)
-									c.XFDone = XFDone
-									c.XFConn = XFConn
-									c.XFStarted = false
-									c.XFBuffer = make([]byte, 8192)
-									startXunFei(c)
-								}else{
-									log.Println("still still  fail to connect to xunfei, error:");
-								}
 						}
 					case "stop":
 						switch c.coreType{
-							case "en.sent.score", "en.word.score", "en.pict.score":
-								stopEngine(c.engine)
-							case "en.pqan.score", "en.sim.score":
-								stopXunFei(c)
-								timer := time.NewTimer(time.Second * 10)
-								select {
-									case <- timer.C:
-										log.Println("xunfei response timeout!")
-									case xunfeiRsp:= <- c.XFDone:
-										log.Println("xunfei response ", xunfeiRsp)
-										//c.send <- []byte( xunfeiRsp)
-										formData := url.Values{}
-										formData.Set("rank", "5")
-										formData.Set("requestTexts", xunfeiRsp)
-									
-										imArr := []interface{}{}
-										if c.coreType == "en.sim.score" {
-											imArr = c.request["implications"].([]interface{})
-											for _,imItem := range imArr{
-												//imObj := imItem.(map[string]interface{})
-												imStr := imItem.(string)
-												imStr = strings.TrimSpace(imStr)
-												formData.Add("implications", imStr)
-											}
-
-										}else{
-											imArr = c.request["lm"].([]interface{})
-											for _,imItem := range imArr{
-												imObj := imItem.(map[string]interface{})
-												imStr := imObj["text"].(string)
-												imStr = strings.TrimSpace(imStr)
-												formData.Add("implications", imStr)
-											}
-										}
-										log.Println("nlp formData:", formData)
-										log.Println("similarity url:" , similarityURL)
-										rsp, err := http.PostForm(similarityURL, formData)
-										if err != nil {
-											log.Fatalln(err)
-										}
-
-										defer rsp.Body.Close()
-										body, err := ioutil.ReadAll(rsp.Body)
-										log.Println("nlp response:", string(body))
-
-										//json.NewDecoder(rsp.Body).Decode(&result)
-										var rspObj map[string]interface{}
-										var similarity  = 3.3
-										if err:=json.Unmarshal(body,&rspObj); err!= nil{
-											log.Println("Parse nlp similarity failed:",  err)
-										}else{
-											similarity  = rspObj["similarity"].(float64)
-										}
-										log.Println("similarity: " , similarity)
-										evalRsp   := make(map[string]interface{})
-										resultObj := make(map[string]interface{})
-										evalRsp["result"] = resultObj
-										evalRsp["errId"] = 0
-										evalRsp["errMsg"] = nil
-										evalRsp["userData"] = c.userData
-										evalRsp["userId"] = "guest"
-										evalRsp["coreType"] = c.coreType
-										evalRsp["ts"] = strconv.FormatInt(time.Now().Unix(), 10)
-
-										resultObj["scoreProStress"] =strconv.FormatFloat(similarity, 'f', -1, 32)
-										resultObj["scoreProFluency"] =resultObj["scoreProStress"]
-										resultObj["scoreProNoAccent"] =resultObj["scoreProStress"]
-										finalRspStr,_ := json.Marshal(evalRsp)
-										if true == c.valid {
-											c.send<- []byte(finalRspStr)
-										}
-										//close(c.send)
-								}
+							case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
+								stopEngine(c)
 						}
-
-						//deleteEngine(c.engine)
 					default:
 						log.Println("illegal action")
 				}
@@ -249,10 +140,8 @@ func (c *Client) readMessage() {
 			}else if(msgType == websocket.BinaryMessage){
 				//log.Printf("recv binary len: %d, coreType:%s\n", len(message), c.coreType)
 				switch c.coreType{
-						case "en.sent.score", "en.word.score", "en.pict.score":
-							feedEngine(c.engine, message)
-						case "en.pqan.score", "en.sim.score":
-							feedXunFei(c, message)
+						case "en.sent.score", "en.word.score", "en.pict.score","en.pqan.score", "en.sim.score":
+							feedEngine(c, message)
 				}
 
 			}
@@ -271,11 +160,14 @@ func (c *Client) writeMessage() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.conn.Close()
+		c.hub.unregister <- c
+		//c.conn.Close()
 	}()
 	for {
 		select {
 		case message, ok := <-c.send:
+			log.Printf("client %s ssound_delete\n", c.id)
+			deleteEngine(c)
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -286,9 +178,8 @@ func (c *Client) writeMessage() {
 			if err != nil {
 				return
 			}
-			log.Println("RSP:" , string(message))
+			log.Println(c.id, ",RSP:" , string(message))
 			w.Write(message)
-
 			// Add queued chat messages to the current websocket message.
 			n := len(c.send)
 			for i := 0; i < n; i++ {
@@ -299,12 +190,15 @@ func (c *Client) writeMessage() {
 			if err := w.Close(); err != nil {
 				return
 			}
+			//c.conn.Close()
 		case <-ticker.C:
 			//log.Println("set write timeout");
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Println(err)
-				return
+			if true == c.valid {
+				c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+				if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+					log.Println("WriteMessage PingMessage ", err)
+					return
+				}
 			}
 		}
 	}
@@ -335,9 +229,9 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("serveWs upgrade error:", err)
-		
 		return
 	}
+	//conn.Close()
 	client := &Client{hub: hub,inTime:time.Now(), conn: conn, id: getIpPort(r),  valid:true, send: make(chan []byte, 256)}
 	client.hub.register <- client
 
