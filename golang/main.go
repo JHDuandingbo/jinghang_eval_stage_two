@@ -10,12 +10,29 @@ import (
 	"log"
 //	"time"
 	"net/http"
+//	"runtime/pprof"
 )
 
 func main() {
 
-	args := os.Args
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+/////////////////////////////
+/*
+	f, err := os.Create("./cpu.pprof")
+        if err != nil {
+            log.Fatal("could not create CPU profile: ", err)
+        }
+        if err := pprof.StartCPUProfile(f); err != nil {
+            log.Fatal("could not start CPU profile: ", err)
+        }
+		defer pprof.StopCPUProfile()
+*/
+  go func() {
+        log.Println(http.ListenAndServe("localhost:6060", nil))
+    }()
+/////////////////////////////
 
+	args := os.Args
 	if 2 != len(args){
 		log.Fatal("Usage:%s <port>");
 	}
@@ -23,7 +40,6 @@ func main() {
 	addr := "0.0.0.0:" + args[1]
 	log.Println("Server listen addr ", addr)
 
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	hub := newHub()
 	go hub.run()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

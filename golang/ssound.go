@@ -23,14 +23,9 @@ static inline int my_cb(const void *client, const char *id, int type,const void 
 }
 static inline int _ssound_start(struct ssound * engine, const char * start_tpl_str, void *client){
 	char id[64];
-	fprintf(stderr, "start str:%s\n", start_tpl_str);
+	//fprintf(stderr, "\n\nstart str:%s\n", start_tpl_str);
 	int ret = ssound_start(engine, start_tpl_str, id, my_cb, client);
-	if(-1 == ret){
-		fprintf(stderr, "ssound_start failed!\n");
-	}else{
-		fprintf(stderr, "ssound_start ok!\n");
-	}
-	return 0;
+	return ret;
 
 }
 
@@ -202,8 +197,13 @@ func startEngine(c *Client) *C.struct_ssound {
 	cStartStr := C.CString(string(startStr));
 	defer C.free(unsafe.Pointer(cStartStr))
 
-	//log.Println("client ", c.id , " ssound_start->", string(startStr))
-	C._ssound_start(engine, cStartStr, pointer.Save(c))
+	startRes := C._ssound_start(engine, cStartStr, pointer.Save(c))
+	if 0 != startRes {
+			log.Printf("client %s ssound_start error ->%d\n", c.id, startRes)
+			C.ssound_stop(c.engine);
+	}
+
+	log.Println("\n\nclient ", c.id , " ssound_start:", string(startStr))
 	return engine
 }
 
@@ -219,6 +219,8 @@ func feedEngine(c *Client, data []byte){
 	cdata := C.CBytes(data)
 	defer C.free(cdata)
 	if len(data) >0 {
+		
+		log.Printf("%s, ssound_feed, c.engine:%x, cdata:%x, data len:%d\n", c.id, c.engine, cdata, len(data))
 		feedRes := C.ssound_feed(c.engine, cdata, C.int(len(data)))
 		if 0 != feedRes {
 			log.Printf("client %s ssound_feed error ->%d\n", c.id, feedRes)
