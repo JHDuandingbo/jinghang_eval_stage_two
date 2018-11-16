@@ -239,6 +239,7 @@ func initEngine(c *Client){
 	cInitStr := C.CString(initTemplate);
 	defer C.free(unsafe.Pointer(cInitStr))
 	c.engine = C.ssound_new(cInitStr)
+	c.engineState = "inited"
 	log.Printf("client %s, ssound_new:%p\n", c.id ,  c.engine)
 
 }
@@ -285,8 +286,9 @@ func startEngine(c *Client) {
 	if 0 != startRes {
 			log.Printf("client %s ssound_start error ->%d\n", c.id, startRes)
 			C.ssound_stop(c.engine);
+			c.engineState = "stopped"
 	}
-
+	c.engineState = "started"
 	log.Println("client ", c.id , " ssound_start:", string(startStr))
 }
 
@@ -306,6 +308,7 @@ func feedEngine(c *Client, data []byte){
 	if 0 != feedRes {
 		log.Printf("client %s ssound_feed error ->%d\n", c.id, feedRes)
 		C.ssound_stop(c.engine);
+		c.engineState = "stopped"
 	}
 }
 
@@ -313,15 +316,19 @@ func feedEngine(c *Client, data []byte){
 func stopEngine(c * Client){
 	log.Printf("client %s ssound_stop engine:%p\n", c.id,c.engine)
 	C.ssound_stop(c.engine);
+	c.engineState = "stopped"
 }
 //func deleteEngine(eng *C.struct_ssound){
 func deleteEngine(c *Client){
 	log.Printf("client %s ssound_delete engine:%p\n", c.id, c.engine)
 	C.ssound_delete(c.engine);
 	c.engine = nil
+	c.engineState = "deleted"
+
 }
 //func cancelEngine(eng *C.struct_ssound){
 func cancelEngine(c *Client){
-	log.Printf("client %s ssound_cancel\n", c.id)
+	log.Printf("client %s ssound_cancel engine:%p\n", c.id, c.engine)
 	C.ssound_cancel(c.engine);
+	c.engineState = "canceled"
 }

@@ -62,6 +62,7 @@ type Client struct {
 
 
 
+	engineState  string
 
 	id string
 	port int64
@@ -87,7 +88,6 @@ type Client struct {
 func (c *Client) readMessage() {
 	log.Printf("handle reading for client:%s\n", c.id)
 	defer func() {
-		//c.hub.unregC <- c
 		c.hub.unregC <- c.port
 		deleteEngine(c)
 	}()
@@ -111,6 +111,10 @@ func (c *Client) readMessage() {
 				}
 				switch msg["action"].(string){
 					case "start":
+						if "started" == c.engineState {
+							cancelEngine(c)
+							break;
+						}
 						if msg["userData"] != nil{
 							c.userData   = msg["userData"].(string)
 						}
@@ -137,10 +141,11 @@ func (c *Client) readMessage() {
 							case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
 								stopEngine(c)
 						}
+					case "cancel":
+							cancelEngine(c)
 					default:
-						log.Println("illegal action")
+						log.Println("illegal action:",string(message))
 				}
-
 			}else if(msgType == websocket.BinaryMessage){
 				//log.Printf("recv binary len: %d, coreType:%s\n", len(message), c.coreType)
 				switch c.coreType{
