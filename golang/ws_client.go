@@ -11,7 +11,7 @@ import (
 	"net/http"
 	//"net/url"
 	//"strings"
-	//"strconv"
+	"strconv"
 	//"io/ioutil"
 	"time"
 	"encoding/json"
@@ -64,6 +64,7 @@ type Client struct {
 
 
 	id string
+	port int64
 
 
 	XFStarted bool
@@ -86,11 +87,14 @@ type Client struct {
 func (c *Client) readMessage() {
 	log.Printf("handle reading for client:%s\n", c.id)
 	defer func() {
-		c.hub.unregister <- c
+		//c.hub.unregC <- c
+		c.hub.unregC <- c.port
+		deleteEngine(c)
 	}()
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	initEngine(c)
 	for {
 		//log.Println("before ReadMessage")
 		msgType, message, err := c.conn.ReadMessage()
@@ -126,7 +130,7 @@ func (c *Client) readMessage() {
 						c.coreType   = coreType.(string)
 						switch c.coreType{
 							case "en.sent.score", "en.word.score", "en.pict.score","en.pqan.score", "en.sim.score":
-								c.engine = startEngine(c)
+								startEngine(c)
 						}
 					case "stop":
 						switch c.coreType{
@@ -160,14 +164,14 @@ func (c *Client) writeMessage() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.hub.unregister <- c
+		c.hub.unregC <- c.port
 		//c.conn.Close()
 	}()
 	for {
 		select {
 		case message, ok := <-c.send:
-			log.Printf("client %s ssound_delete\n", c.id)
-			deleteEngine(c)
+			//log.Printf("client %s ssound_delete\n", c.id)
+			//deleteEngine(c)
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -178,7 +182,7 @@ func (c *Client) writeMessage() {
 			if err != nil {
 				return
 			}
-			log.Println(c.id, ",RSP:" , string(message))
+			log.Printf("client:%s, RSP:%s\n\n\n", c.id,string(message))
 			w.Write(message)
 			// Add queued chat messages to the current websocket message.
 			n := len(c.send)
@@ -204,24 +208,31 @@ func (c *Client) writeMessage() {
 	}
 }
 
-func getIpPort(req * http.Request)(string){
+func getIpPort(req * http.Request)(id string,portN int64){
     ip, port, err := net.SplitHostPort(req.RemoteAddr)
     if err != nil {
         //return nil, log.Errorf("userip: %q is not IP:port", req.RemoteAddr)
 
         log.Printf( "userip: %q is not IP:port", req.RemoteAddr)
-	return ""
+	return 
     }
 
-    userIP := net.ParseIP(ip)
+    portN,err = strconv.ParseInt(port, 10, 32) 
+    if err != nil {
+		log.Println("port number illegal")
+	}
+
+
+     userIP := net.ParseIP(ip)
     if userIP == nil {
         //return nil, log.Errorf("userip: %q is not IP:port", req.RemoteAddr)
         log.Printf( "userip: %q is not IP:port", req.RemoteAddr)
-        return ""
+        return 
     }
-
     log.Printf( "%s:%s connected\n", ip, port)
-    return ip + ":" + port
+    //return (ip+":"+port) , portN
+	id = ip +":" + port
+	return
 }
 
 // serveWs handles websocket requests from the peer.
@@ -232,8 +243,11 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//conn.Close()
-	client := &Client{hub: hub,inTime:time.Now(), conn: conn, id: getIpPort(r),  valid:true, send: make(chan []byte, 256)}
-	client.hub.register <- client
+	id,port:= getIpPort(r)
+	log.Printf("id :%s, port:%d\n", id, port)
+	client := &Client{hub: hub,inTime:time.Now(), conn: conn, id:id, port: port,  valid:true, send: make(chan []byte, 256)}
+	//client.hub.register <- client
+	client.hub.regC <- RegMsg{port:port, client:client}
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.

@@ -10,25 +10,24 @@ package main
 #cgo LDFLAGS: -L./lib -lssound -lsiren
 
 
-//extern void ssoundCallback(void * userData,const  char * message, int len);
+//extern void ssoundCallback(int  userData,const  char * message, int len);
 
-static inline int my_cb(const void *client, const char *id, int type,const void *message, int size){
+static inline int my_cb(const void *port, const char *id, int type,const void *message, int size){
 	if (type == SSOUND_MESSAGE_TYPE_JSON){
 		//fprintf(stderr, "RSP:%s\n", (const char *)message);
-		ssoundCallback(client, (const char *)message, size);
+		ssoundCallback(port, (const char *)message, size);
 	}
 	return 0;
 
 
 }
-static inline int _ssound_start(struct ssound * engine, const char * start_tpl_str, void *client){
+static inline int _ssound_start(struct ssound * engine, const char * start_tpl_str, int port){
 	char id[64];
 	//fprintf(stderr, "\n\nstart str:%s\n", start_tpl_str);
-	int ret = ssound_start(engine, start_tpl_str, id, my_cb, client);
+	int ret = ssound_start(engine, start_tpl_str, id, my_cb, (void *)port);
 	return ret;
 
 }
-
 
 */
 import "C" 
@@ -37,7 +36,7 @@ import (
 "time"
 "log"
 "encoding/json"
-"github.com/mattn/go-pointer"
+//"github.com/mattn/go-pointer"
 "strconv"
 )
 
@@ -69,13 +68,95 @@ var startTemplate = `
 		"rank":5
 	} 
 }`
-
 //export ssoundCallback
-func ssoundCallback(v unsafe.Pointer,  msg *C.char, size C.int){
-	//c := (*Client)(userData);
-	c := pointer.Restore(v).(*Client)
+func ssoundCallback(port C.int,  msg *C.char, size C.int){
 	gmsg := C.GoStringN(msg, size)
-	log.Println(c.id, ",ssound RSP:", gmsg)
+	hub.msgC <- Msg{port:int64(port), ssoundRSP:[]byte(gmsg)}
+}
+func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
+
+	var ssObj map[string]interface{}
+	if err := json.Unmarshal([]byte(ssData), &ssObj); err != nil {
+			panic(err)// do not use panic here
+	}
+	err := ssObj["error"]
+	finalObj := make(map[string]interface{})
+	finalObj["errMsg"]= nil
+	finalObj["errId"] = 0
+	finalObj["userId"] = "guest"
+	finalObj["userData"] = c.userData
+	finalObj["coreType"] = c.coreType
+	finalObj["ts"] = strconv.FormatInt(time.Now().Unix(), 10)
+	if nil != err {
+		finalObj["errMsg"]=ssObj["error"].(string)
+		finalObj["errId"] = int(ssObj["errId"].(float64))
+		finalObj["result"] = nil
+	}else{
+		finalResObj := make(map[string]interface{})
+		finalObj["result"] = finalResObj
+		ssResObj := ssObj["result"].(map[string]interface{})
+		ssReqObj := ssObj["params"].(map[string]interface{})["request"].(map[string]interface{})
+		coreType := ssReqObj["coreType"].(string)
+		switch coreType {
+			case "en.sent.score": 
+				finalResObj["sentence"] =c.request["refText"].(string) 
+				finalResObj["scoreProStress"] = strconv.FormatFloat(ssResObj["rhythm"].(map[string]interface{})["stress"].(float64), 'f',-1,32)
+				finalResObj["scoreProFluency"] = strconv.FormatFloat(ssResObj["fluency"].(map[string]interface{})["overall"].(float64), 'f',-1,32)
+				finalResObj["scoreProNoAccent"] = strconv.FormatFloat(ssResObj["pron"].(float64), 'f', -1, 32)
+				badWordIndex :=[]interface{}{}
+				missingWordIndex :=[]interface{}{}
+				details := ssResObj["details"].([]interface{})
+				for i,item := range details{
+					score:=item.(map[string]interface{})["score"].(float64)
+					if score < 3 {
+						badWordIndex = append(badWordIndex, strconv.FormatInt(int64(i+1), 10))
+					}
+				}
+				finalResObj["missingWordIndex"] = missingWordIndex
+				finalResObj["badWordIndex"] = badWordIndex
+			case "en.word.score":
+				finalResObj["sentence"] =c.request["refText"].(string) 
+				finalResObj["scoreProNoAccent"] = strconv.FormatFloat(ssResObj["pron"].(float64), 'f', -1, 32)
+				finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"]
+				finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
+			case "en.pqan.score", "en.retell.score","en.pict.score":
+				//finalResObj["sentence"] =c.request["refText"].(string) 
+				if coreType == "en.retell.score"{
+					implicationArr := c.request["implications"].([]interface{})
+					implication := implicationArr[0].(string)
+					finalResObj["sentence"] =implication
+				}
+				overall := ssResObj["overall"].(float64)
+				fluency := ssResObj["fluency"].(float64)
+				pron := ssResObj["pron"].(float64)
+
+				if fluency > 5 {
+					fluency = fluency / 20.0
+				}
+				if pron > 5 {
+					pron = pron / 20.0
+				}
+				//log.Println("en.pqan.score, overall ", overall)
+				//finalResObj["scoreProNoAccent"] = strconv.FormatFloat(pron, 'f', -1, 32)
+				finalResObj["scoreProNoAccent"] = strconv.FormatFloat(overall, 'f', -1, 32)
+				//finalResObj["scoreProStress"]   =  strconv.FormatFloat(overall, 'f', -1, 32)
+				finalResObj["scoreProStress"]   =  strconv.FormatFloat(overall, 'f', -1, 32)
+				//finalResObj["scoreProFluency"]  = strconv.FormatFloat(fluency, 'f', -1, 32)
+				finalResObj["scoreProFluency"]  = strconv.FormatFloat(overall, 'f', -1, 32)
+		}
+	}
+	finalBytes,err = json.Marshal(finalObj)
+	if nil != err{
+		log.Println("fail to stringify finalObj:",finalObj)
+	}
+	return
+}
+/*
+func ssoundCallback_(port C.int,  msg *C.char, size C.int){
+	//c := (*Client)(userData);
+	//c := pointer.Restore(v).(*Client)
+	gmsg := C.GoStringN(msg, size)
+	//log.Println(c.id, ",ssound RSP:", gmsg)
 
 	var msgObj map[string]interface{}
 	if err := json.Unmarshal([]byte( gmsg), &msgObj); err != nil {
@@ -152,19 +233,21 @@ func ssoundCallback(v unsafe.Pointer,  msg *C.char, size C.int){
 		c.send<- []byte(evalRspStr)
 	}
 }
-func startEngine(c *Client) *C.struct_ssound {
+*/
 
+func initEngine(c *Client){
 	cInitStr := C.CString(initTemplate);
 	defer C.free(unsafe.Pointer(cInitStr))
-	//engine := & C.struct_ssound{};
-	//log.Println("client ", c.id ,  " ssound_new->",  initTemplate)
-	engine := C.ssound_new(cInitStr)
+	c.engine = C.ssound_new(cInitStr)
+	log.Printf("client %s, ssound_new:%p\n", c.id ,  c.engine)
+
+}
+func startEngine(c *Client) {
 /////////////////////////////////////////////////////
 	var startObj map[string]interface{}
 	if err := json.Unmarshal([]byte( startTemplate), &startObj); err != nil {
 			panic(err)// do not use panic here
 	}
-
 
 	if "en.sim.score" == c.coreType {
 		ssReqObj := make(map[string]interface{})
@@ -197,14 +280,14 @@ func startEngine(c *Client) *C.struct_ssound {
 	cStartStr := C.CString(string(startStr));
 	defer C.free(unsafe.Pointer(cStartStr))
 
-	startRes := C._ssound_start(engine, cStartStr, pointer.Save(c))
+	//startRes := C._ssound_start(c.engine, cStartStr, pointer.Save(c))
+	startRes := C._ssound_start(c.engine, cStartStr, C.int(c.port))
 	if 0 != startRes {
 			log.Printf("client %s ssound_start error ->%d\n", c.id, startRes)
 			C.ssound_stop(c.engine);
 	}
 
-	log.Println("\n\nclient ", c.id , " ssound_start:", string(startStr))
-	return engine
+	log.Println("client ", c.id , " ssound_start:", string(startStr))
 }
 
 /*
@@ -218,28 +301,24 @@ func feedEngine(eng *C.struct_ssound, data []byte){
 func feedEngine(c *Client, data []byte){
 	cdata := C.CBytes(data)
 	defer C.free(cdata)
-	if len(data) >0 {
-		
-		log.Printf("%s, ssound_feed, c.engine:%x, cdata:%x, data len:%d\n", c.id, c.engine, cdata, len(data))
-		feedRes := C.ssound_feed(c.engine, cdata, C.int(len(data)))
-		if 0 != feedRes {
-			log.Printf("client %s ssound_feed error ->%d\n", c.id, feedRes)
-			C.ssound_stop(c.engine);
-		}
-	}else{
-		log.Println("client %s ssound_feed, data len is 0, ssound_stop \n", c.id);
+//	log.Printf("%s, ssound_feed, c.engine:%p, cdata:%p, data len:%d\n", c.id, c.engine, cdata, len(data))
+	feedRes := C.ssound_feed(c.engine, cdata, C.int(len(data)))
+	if 0 != feedRes {
+		log.Printf("client %s ssound_feed error ->%d\n", c.id, feedRes)
 		C.ssound_stop(c.engine);
 	}
 }
 
 //func stopEngine(eng *C.struct_ssound){
 func stopEngine(c * Client){
-	log.Printf("client %s ssound_stop\n", c.id)
+	log.Printf("client %s ssound_stop engine:%p\n", c.id,c.engine)
 	C.ssound_stop(c.engine);
 }
 //func deleteEngine(eng *C.struct_ssound){
 func deleteEngine(c *Client){
+	log.Printf("client %s ssound_delete engine:%p\n", c.id, c.engine)
 	C.ssound_delete(c.engine);
+	c.engine = nil
 }
 //func cancelEngine(eng *C.struct_ssound){
 func cancelEngine(c *Client){

@@ -13,6 +13,7 @@ import (
 //	"runtime/pprof"
 )
 
+var hub *Hub
 func main() {
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -27,9 +28,6 @@ func main() {
         }
 		defer pprof.StopCPUProfile()
 */
-  go func() {
-        log.Println(http.ListenAndServe("localhost:6060", nil))
-    }()
 /////////////////////////////
 
 	args := os.Args
@@ -40,7 +38,7 @@ func main() {
 	addr := "0.0.0.0:" + args[1]
 	log.Println("Server listen addr ", addr)
 
-	hub := newHub()
+	hub = newHub()
 	go hub.run()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
