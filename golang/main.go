@@ -5,43 +5,43 @@
 package main
 
 import (
-//	"flag"
-	"os"
+	//	"flag"
 	"log"
-//	"time"
+	"os"
+	//	"time"
 	"net/http"
-//	"runtime/pprof"
+	//	"runtime/pprof"
 )
 
-var hub *Hub
+//var hub *Hub
+
+func CreateDirIfNotExist(dir string) {
+      if _, err := os.Stat(dir); os.IsNotExist(err) {
+              err = os.MkdirAll(dir, 0755)
+              if err != nil {
+                      panic(err)
+              }
+      }
+}
+
 func main() {
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-/////////////////////////////
-/*
-	f, err := os.Create("./cpu.pprof")
-        if err != nil {
-            log.Fatal("could not create CPU profile: ", err)
-        }
-        if err := pprof.StartCPUProfile(f); err != nil {
-            log.Fatal("could not start CPU profile: ", err)
-        }
-		defer pprof.StopCPUProfile()
-*/
-/////////////////////////////
-
 	args := os.Args
-	if 2 != len(args){
-		log.Fatal("Usage:%s <port>");
+	if 2 != len(args) {
+		log.Fatal("Usage:%s <port>")
 	}
-	
+
 	addr := "0.0.0.0:" + args[1]
 	log.Println("Server listen addr ", addr)
 
-	hub = newHub()
-	go hub.run()
+
+	CreateDirIfNotExist(audioDir)
+	// hub = newHub()
+	// go hub.run()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
+		//serveWs(hub, w, r)
+		serveWs(w, r)
 	})
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
