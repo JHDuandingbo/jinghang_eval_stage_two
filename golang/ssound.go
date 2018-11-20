@@ -71,18 +71,19 @@ var startTemplate = `
 }`
 
 //export ssoundCallback
-func ssoundCallback(port C.int, cmsg *C.char, size C.int) {
+func ssoundCallback(key C.int, cmsg *C.char, size C.int) {
 	msg := C.GoStringN(cmsg, size)
 
 	var c *Client = nil
-	portStr := strconv.FormatInt(int64(port),  10)
+	portStr := strconv.FormatInt(int64(key),  10)
+	log.Printf("ssoundCallback called, got response, key:%d\n", key)
 	if tmp, ok := gMap.Get(portStr); ok{
 		c = tmp.(*Client)
 		log.Printf("%s SS RSP: %s", c.id,msg)
 		finalBytes := buildRSP(c, []byte(msg))
 		c.ssRspC <- finalBytes
 	}else{
-		log.Printf("%s fail to get * Client from gmap with port:%d\n",c.id, int(port), )
+		log.Printf("%s fail to get * Client from gmap with port:%d\n",c.id, int(key), )
 	}
 	//hub.msgC <- Msg{port: int64(port), ssoundRSP: []byte(gmsg)}
 	//hub.recvC <- Msg{port: int64(port), ssoundRSP: []byte(gmsg)}

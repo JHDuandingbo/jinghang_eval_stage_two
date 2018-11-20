@@ -124,7 +124,7 @@ func Save2File(c *Client, suffix string, message []byte){
 
 func   handleMessage(c *Client, msgType int, message []byte){
 	if msgType == websocket.TextMessage {
-		log.Printf("RECV text: %s\n", string(message))
+		log.Printf("%s:RECV text: %s\n",c.id,  string(message))
 		var msg map[string]interface{}
 		if err := json.Unmarshal(message, &msg); err != nil {
 			panic(err)
@@ -171,13 +171,13 @@ func   handleMessage(c *Client, msgType int, message []byte){
 		case "stop":
 			switch c.currCoreType {
 			case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
-				log.Printf("%s ssound_stop engine:%p\n", c.id, c.engine)
+				log.Printf("%s:ssound_stop engine:%p\n", c.id, c.engine)
 				stopEngine(c)
 			}
 		case "cancel":
 			cancelEngine(c)
 		default:
-			log.Println("illegal action:", string(message))
+			log.Println("%s:illegal action:", c.id ,string(message))
 		}
 	} else if msgType == websocket.BinaryMessage {
 		//log.Printf("recv binary len: %d, coreType:%s\n", len(message), c.coreType)
@@ -268,7 +268,7 @@ func (c *Client) writeMessage() {
 			handleMessage(c,wsMsg.msgType, wsMsg.message)
 		case   <-c.done:
 			//log.Println("DONE")
-			log.Printf(":%s disconnected, duration:%f seconds,current clients:%d\n", c.id, time.Since(c.connectTime).Seconds(), gMap.Count())
+			log.Printf("%s:disconnected, duration:%f seconds,current clients:%d\n", c.id, time.Since(c.connectTime).Seconds(), gMap.Count())
 			log.Printf("%s:ssound_delete engine:%p\n", c.id, c.engine)
 			deleteEngine(c)
 			c.conn.Close()//could be more better let the writeMessage routine close the connection
