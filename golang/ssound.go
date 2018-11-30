@@ -41,13 +41,13 @@ import (
 )
 
 var initTemplate = `{   
-				"logLevel":4,
+				"logLevel":1,
                               "appKey":"a235", 
                               "secretKey":"c11163aa6c834a028da4a4b30955bd15", 
                               "cloud":{ 
 				      "server":"wss://api.cloud.ssapi.cn", 
 				      "connectTimeout":20, 
-				      "serverTimeout":2
+				      "serverTimeout":10
                               }
 	      }`
 var startTemplate = `
@@ -233,26 +233,39 @@ func startEngine(c *Client) {
 	log.Printf("%s: ssound_start:%s",c.id, string(startStr))
 }
 
-/*
-func feedEngine(eng *C.struct_ssound, data []byte){
-	cdata := C.CBytes(data)
-	defer C.free(cdata)
-	log.Printf("client %s ssound_feed->%d\n", c.id, len(data))
-	C.ssound_feed(eng, cdata, C.int(len(data)))
-}
-*/
 func feedEngine(c *Client, data []byte) {
-	cdata := C.CBytes(data)
-	defer C.free(cdata)
-	//log.Printf("%s, ssound_feed, c.engine:%p, cdata:%p, data len:%d\n", c.id, c.engine, cdata, len(data))
-	feedRes := C.ssound_feed(c.engine, cdata, C.int(len(data)))
-	if 0 != feedRes {
-		log.Printf("%s ssound_feed error ->%d\n", c.id, feedRes)
-		//C.ssound_stop(c.engine)
-		//c.engineState = "stopped"
-		stopEngine(c)
+	if c.compressed == 0{
+			cdata := C.CBytes(data)
+			defer C.free(cdata)
+			//log.Printf("%s, ssound_feed, c.engine:%p, cdata:%p, data len:%d\n", c.id, c.engine, cdata, len(data))
+			feedRes := C.ssound_feed(c.engine, cdata, C.int(len(data)))
+			if 0 != feedRes {
+				log.Printf("%s ssound_feed error ->%d\n", c.id, feedRes)
+				stopEngine(c)
+			}else{
+				c.engineState = "feeded"
+			}
 	}else{
-		c.engineState = "feeded"
+		c.binaryBuffer = append(c.binaryBuffer, data...);
+		batchSize:= 40
+		for len(c.binaryBuffer) >= batchSize {
+				batch := c.binaryBuffer[:batchSize]
+				c.binaryBuffer = c.binaryBuffer[batchSize:]
+				rawData := decodeBinary(c, batch)
+				//Save2File(c, ".pcm", batch)
+			    cdata := C.CBytes(rawData)
+				//log.Println("feed compressed")
+				feedRes := C.ssound_feed(c.engine, cdata, C.int(len(data)))
+				Save2File(c, ".pcm", rawData)
+				C.free(cdata)
+				if 0 != feedRes {
+						log.Printf("%s ssound_feed error ->%d\n", c.id, feedRes)
+						stopEngine(c)
+				}else{
+						c.engineState = "feeded"
+				}
+
+		}
 	}
 }
 

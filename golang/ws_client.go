@@ -69,7 +69,9 @@ type Client struct {
 	sessionId  string
 	userData   string
 	compressed int
+	binaryBuffer []byte
 	engine     *C.struct_ssound
+	decoder  *C.struct_stSirenDecoder
 
 	engineState string
 
@@ -87,6 +89,7 @@ type Client struct {
 	ssReqC chan WSMsg  
 	ssRspC chan []byte  
 	done chan int
+
 
 
 	
@@ -180,8 +183,8 @@ func   handleMessage(c *Client, msgType int, message []byte){
 			log.Println("%s:illegal action:", c.id ,string(message))
 		}
 	} else if msgType == websocket.BinaryMessage {
-		//log.Printf("recv binary len: %d, coreType:%s\n", len(message), c.coreType)
-		Save2File(c, ".pcm", message)
+		log.Printf("recv binary len: %d, coreType:%s\n", len(message), c.currCoreType)
+		//Save2File(c, ".pcm", message)
 		switch c.currCoreType {
 		case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
 			feedEngine(c, message)
@@ -321,6 +324,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	//client := &Client{hub: hub, connectTime: time.Now(), conn: conn, id: id, port: port, valid: true, ssRspC: make(chan []byte, 4096), ssReqC:make(chan WSMsg, 1)}
 	client := &Client{connectTime: time.Now(), conn: conn, id: id, port: port, valid: true, engineState: "deleted", ssRspC: make(chan []byte, 4096), ssReqC:make(chan WSMsg, 1), done:make(chan int, 1)}
 	//client.hub.register <- client
+	initDecoder(client)
 //	client.hub.regC <- RegMsg{port: port, client: client}
 	gMap.Set(port, client)
 
