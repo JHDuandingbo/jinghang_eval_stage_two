@@ -38,6 +38,7 @@ import (
 	"unsafe"
 	//"github.com/mattn/go-pointer"
 	"strconv"
+	"strings"
 )
 
 var initTemplate = `{   
@@ -75,20 +76,26 @@ func ssoundCallback(key C.int, cmsg *C.char, size C.int) {
 	msg := C.GoStringN(cmsg, size)
 
 	var c *Client = nil
-	portStr := strconv.FormatInt(int64(key),  10)
+	portStr := strconv.FormatInt(int64(key), 10)
 	log.Printf("ssoundCallback called, got response, key:%d\n", key)
-	if tmp, ok := gMap.Get(portStr); ok{
+	if tmp, ok := gMap.Get(portStr); ok {
 		c = tmp.(*Client)
-		log.Printf("%s SS RSP: %s", c.id,msg)
+		log.Printf("%s SS RSP: %s", c.id, msg)
 		finalBytes := buildRSP(c, []byte(msg))
 		c.ssRspC <- finalBytes
-	}else{
-		log.Printf("%s fail to get * Client from gmap with port:%d\n",c.id, int(key), )
+	} else {
+		log.Printf("%s fail to get * Client from gmap with port:%d\n", c.id, int(key))
 	}
 	//hub.msgC <- Msg{port: int64(port), ssoundRSP: []byte(gmsg)}
 	//hub.recvC <- Msg{port: int64(port), ssoundRSP: []byte(gmsg)}
 }
 func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
+
+	var scoreConfig map[string]interface{}
+	if err := json.Unmarshal([]byte(ScoreConfigStr), &scoreConfig); err != nil {
+		panic(err) // do not use panic here
+	}
+
 	var ssObj map[string]interface{}
 	if err := json.Unmarshal([]byte(ssData), &ssObj); err != nil {
 		panic(err) // do not use panic here
@@ -107,17 +114,22 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		finalObj["result"] = nil
 	} else {
 		finalResObj := make(map[string]interface{})
-		finalObj["result"] = finalResObj
+		finalResObjWithStrVal := make(map[string]interface{})
+		finalObj["result"] = finalResObjWithStrVal
 		ssResObj := ssObj["result"].(map[string]interface{})
 		ssReqObj := ssObj["params"].(map[string]interface{})["request"].(map[string]interface{})
 		rspCoreType := ssReqObj["coreType"].(string)
-		finalResObj["overall"] = "4.9";
+		//finalResObj["overall"] = "4.9";
 		switch rspCoreType {
 		case "en.sent.score":
 			finalResObj["sentence"] = c.request["refText"].(string)
-			finalResObj["scoreProStress"] = strconv.FormatFloat(ssResObj["rhythm"].(map[string]interface{})["stress"].(float64), 'f', -1, 32)
-			finalResObj["scoreProFluency"] = strconv.FormatFloat(ssResObj["fluency"].(map[string]interface{})["overall"].(float64), 'f', -1, 32)
-			finalResObj["scoreProNoAccent"] = strconv.FormatFloat(ssResObj["pron"].(float64), 'f', -1, 32)
+			//finalResObj["scoreProStress"] = strconv.FormatFloat(ssResObj["rhythm"].(map[string]interface{})["stress"].(float64), 'f', -1, 32)
+			//finalResObj["scoreProFluency"] = strconv.FormatFloat(ssResObj["fluency"].(map[string]interface{})["overall"].(float64), 'f', -1, 32)
+			//finalResObj["scoreProNoAccent"] = strconv.FormatFloat(ssResObj["pron"].(float64), 'f', -1, 32)
+			finalResObj["scoreProStress"] = ssResObj["rhythm"].(map[string]interface{})["stress"].(float64)
+			finalResObj["scoreProFluency"] = ssResObj["fluency"].(map[string]interface{})["overall"].(float64)
+			finalResObj["scoreProNoAccent"] = ssResObj["pron"].(float64)
+
 			badWordIndex := []interface{}{}
 			missingWordIndex := []interface{}{}
 			details := ssResObj["details"].([]interface{})
@@ -131,9 +143,12 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 			finalResObj["badWordIndex"] = badWordIndex
 		case "en.word.score":
 			finalResObj["sentence"] = c.request["refText"].(string)
-			finalResObj["scoreProNoAccent"] = strconv.FormatFloat(ssResObj["pron"].(float64), 'f', -1, 32)
+			finalResObj["scoreProNoAccent"] = ssResObj["pron"].(float64)
 			finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"]
 			finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
+			//finalResObj["scoreProNoAccent"] = strconv.FormatFloat(ssResObj["pron"].(float64), 'f', -1, 32)
+			//finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"]
+			//finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
 		case "en.pqan.score", "en.retell.score", "en.pict.score":
 			//finalResObj["sentence"] =c.request["refText"].(string)
 			if rspCoreType == "en.retell.score" {
@@ -142,25 +157,121 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 				finalResObj["sentence"] = implication
 			}
 			overall := ssResObj["overall"].(float64)
-			fluency := ssResObj["fluency"].(float64)
-			pron := ssResObj["pron"].(float64)
+			/*
+				fluency := ssResObj["fluency"].(float64)
+				pron := ssResObj["pron"].(float64)
 
-			if fluency > 5 {
-				fluency = fluency / 20.0
-			}
-			if pron > 5 {
-				pron = pron / 20.0
-			}
-			//log.Println("en.pqan.score, overall ", overall)
-			//finalResObj["scoreProNoAccent"] = strconv.FormatFloat(pron, 'f', -1, 32)
-			finalResObj["scoreProNoAccent"] = strconv.FormatFloat(overall, 'f', -1, 32)
-			//finalResObj["scoreProStress"]   =  strconv.FormatFloat(overall, 'f', -1, 32)
-			finalResObj["scoreProStress"] = strconv.FormatFloat(overall, 'f', -1, 32)
-			//finalResObj["scoreProFluency"]  = strconv.FormatFloat(fluency, 'f', -1, 32)
-			finalResObj["scoreProFluency"] = strconv.FormatFloat(overall, 'f', -1, 32)
+				if fluency > 5 {
+					fluency = fluency / 20.0
+				}
+				if pron > 5 {
+					pron = pron / 20.0
+				}
+			*/
+			//finalResObj["scoreProNoAccent"] = strconv.FormatFloat(overall, 'f', -1, 32)
+			//finalResObj["scoreProStress"] = strconv.FormatFloat(overall, 'f', -1, 32)
+			//finalResObj["scoreProFluency"] = strconv.FormatFloat(overall, 'f', -1, 32)
+			finalResObj["scoreProNoAccent"] = overall
+			finalResObj["scoreProStress"] = overall
+			finalResObj["scoreProFluency"] = overall
+			finalResObj["semanticAccuracy"] = overall
 		}
+
+		if finalResObj["scoreProStress"] != nil {
+			finalResObj["stress"] = finalResObj["scoreProStress"]
+		} else {
+			finalResObj["stress"] = 0.0
+		}
+		if finalResObj["scoreProNoAccent"] != nil {
+			finalResObj["pron"] = finalResObj["scoreProNoAccent"]
+		} else {
+			finalResObj["pron"] = 0.0
+		}
+		if finalResObj["scoreProFluency"] != nil {
+			finalResObj["fluency"] = finalResObj["scoreProFluency"]
+		} else {
+			finalResObj["fluency"] = 0.0
+		}
+		if finalResObj["semanticAccuracy"] == nil {
+			finalResObj["semanticAccuracy"] = 0.0
+		}
+		if finalResObj["grammar"] == nil {
+			finalResObj["grammar"] = 0.0
+		}
+		if finalResObj["vocabulary"] == nil {
+			finalResObj["vocabulary"] = 0.0
+		}
+		if finalResObj["relevancy"] == nil {
+			finalResObj["relevancy"] = 0.0
+		}
+		if finalResObj["liaison"] == nil {
+			finalResObj["liaison"] = 0.0
+		}
+
+		log.Printf("%s requestKey:%s", c.id, c.requestKey)
+		if c.requestKey == "" {
+			overall := 0.0
+			count := 0
+			for key, val := range finalResObj {
+				if key == "badWordIndex" || key == "sentence" || key == "missingWordIndex" {
+					continue
+				}
+				overall += val.(float64)
+				if 0 != val {
+					count++
+				}
+			}
+			log.Printf("%s overall:%f, count:%d\n", c.id, overall, count)
+			finalResObj["overall"] = overall / float64(count)
+
+			finalObj["errMsg"] = "Illegal request Key"
+			finalObj["errId"] = 1
+		} else {
+			//	scoreConfig
+			requestTypeArr := strings.Split(c.requestKey, ".")
+			requestType := strings.Join(requestTypeArr[:len(requestTypeArr)-1], ".")
+			if scoreConfig[requestType] != nil {
+				//log.Println(
+				weightConfig := scoreConfig[requestType].(map[string]interface{})["weights"].(map[string]interface{})
+				overall := 0.0
+				count := 0
+				for key, val := range weightConfig {
+					//log.Println(finalResObj)
+					overall += (val.(float64)) * finalResObj[key].(float64)
+					if 0 != val.(float64) {
+						count++
+					}
+				}
+				log.Printf("%s overall:%f, count:%d\n", c.id, overall, count)
+				finalResObj["overall"] = overall / (float64)(count)
+			} else {
+				log.Println("no score config found with requestType:%s", requestType)
+				overall := 0.0
+				count := 0
+				for key, val := range finalResObj {
+					if key == "badWordIndex" || key == "sentence" || key == "missingWordIndex" {
+						continue
+					}
+					overall += val.(float64)
+					if 0 != val {
+						count++
+					}
+				}
+				finalResObj["overall"] = overall / float64(count)
+
+			}
+
+		}
+
+		for key, val := range finalResObj {
+			if key == "badWordIndex" || key == "sentence" || key == "missingWordIndex" {
+				finalResObjWithStrVal[key] = finalResObj[key]
+			} else {
+				finalResObjWithStrVal[key] = strconv.FormatFloat(val.(float64), 'f', -1, 64)
+			}
+		}
+
 	}
-	
 	finalBytes, err = json.Marshal(finalObj)
 	if nil != err {
 		log.Println("fail to stringify finalObj:", finalObj)
@@ -168,12 +279,11 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 	return
 }
 
-
 func initEngine(c *Client) {
 	cInitStr := C.CString(initTemplate)
 	defer C.free(unsafe.Pointer(cInitStr))
 	c.engine = C.ssound_new(cInitStr)
-	if nil == c.engine{
+	if nil == c.engine {
 		log.Printf("%s, ssound_new failed, %p\n", c.id, c.engine)
 	}
 	c.engineState = "inited"
@@ -222,8 +332,7 @@ func startEngine(c *Client) {
 		log.Println("port number illegal")
 	}
 
-
-//	initEngine(c)
+	//	initEngine(c)
 	startRes := C._ssound_start(c.engine, cStartStr, C.int(portN))
 	if 0 != startRes {
 		log.Printf("%s ssound_start error ->%d, %s\n", c.id, startRes, startStr)
@@ -232,40 +341,40 @@ func startEngine(c *Client) {
 		stopEngine(c)
 	}
 	c.engineState = "started"
-	log.Printf("%s: ssound_start:%s",c.id, string(startStr))
+	log.Printf("%s: ssound_start:%s", c.id, string(startStr))
 }
 
 func feedEngine(c *Client, data []byte) {
-	if c.compressed == 0{
-			cdata := C.CBytes(data)
-			defer C.free(cdata)
-			//log.Printf("%s, ssound_feed, c.engine:%p, cdata:%p, data len:%d\n", c.id, c.engine, cdata, len(data))
+	if c.compressed == 0 {
+		cdata := C.CBytes(data)
+		defer C.free(cdata)
+		//log.Printf("%s, ssound_feed, c.engine:%p, cdata:%p, data len:%d\n", c.id, c.engine, cdata, len(data))
+		feedRes := C.ssound_feed(c.engine, cdata, C.int(len(data)))
+		if 0 != feedRes {
+			log.Printf("%s ssound_feed error ->%d\n", c.id, feedRes)
+			stopEngine(c)
+		} else {
+			c.engineState = "feeded"
+		}
+	} else {
+		c.binaryBuffer = append(c.binaryBuffer, data...)
+		batchSize := 40
+		for len(c.binaryBuffer) >= batchSize {
+			batch := c.binaryBuffer[:batchSize]
+			c.binaryBuffer = c.binaryBuffer[batchSize:]
+			rawData := decodeBinary(c, batch)
+			//Save2File(c, ".pcm", batch)
+			cdata := C.CBytes(rawData)
+			//log.Println("feed compressed")
 			feedRes := C.ssound_feed(c.engine, cdata, C.int(len(data)))
+			Save2File(c, ".pcm", rawData)
+			C.free(cdata)
 			if 0 != feedRes {
 				log.Printf("%s ssound_feed error ->%d\n", c.id, feedRes)
 				stopEngine(c)
-			}else{
+			} else {
 				c.engineState = "feeded"
 			}
-	}else{
-		c.binaryBuffer = append(c.binaryBuffer, data...);
-		batchSize:= 40
-		for len(c.binaryBuffer) >= batchSize {
-				batch := c.binaryBuffer[:batchSize]
-				c.binaryBuffer = c.binaryBuffer[batchSize:]
-				rawData := decodeBinary(c, batch)
-				//Save2File(c, ".pcm", batch)
-			    cdata := C.CBytes(rawData)
-				//log.Println("feed compressed")
-				feedRes := C.ssound_feed(c.engine, cdata, C.int(len(data)))
-				Save2File(c, ".pcm", rawData)
-				C.free(cdata)
-				if 0 != feedRes {
-						log.Printf("%s ssound_feed error ->%d\n", c.id, feedRes)
-						stopEngine(c)
-				}else{
-						c.engineState = "feeded"
-				}
 
 		}
 	}
@@ -276,26 +385,26 @@ func stopEngine(c *Client) {
 	stopRes := C.ssound_stop(c.engine)
 	if stopRes != 0 {
 		log.Printf("%s SSOUND_STOP error ->%d\n", c.id, stopRes)
-	}else{
+	} else {
 		c.engineState = "stopped"
 	}
 }
 
 //func deleteEngine(eng *C.struct_ssound){
 func deleteEngine(c *Client) {
-		C.ssound_delete(c.engine)
-		c.engine = nil
-		c.engineState = "deleted"
-/*
-	if "stopped" == c.engineState || "canceled" == c.engineState{
-		log.Printf("%s:ssound_delete engine:%p\n", c.id, c.engine)
-		C.ssound_delete(c.engine)
-		c.engine = nil
-		c.engineState = "deleted"
-	}else{
-		log.Printf("%s:could not run ssound_delete engine:%p, current state:%s\n", c.id, c.engine, c.engineState)
-	}
-*/
+	C.ssound_delete(c.engine)
+	c.engine = nil
+	c.engineState = "deleted"
+	/*
+		if "stopped" == c.engineState || "canceled" == c.engineState{
+			log.Printf("%s:ssound_delete engine:%p\n", c.id, c.engine)
+			C.ssound_delete(c.engine)
+			c.engine = nil
+			c.engineState = "deleted"
+		}else{
+			log.Printf("%s:could not run ssound_delete engine:%p, current state:%s\n", c.id, c.engine, c.engineState)
+		}
+	*/
 
 }
 

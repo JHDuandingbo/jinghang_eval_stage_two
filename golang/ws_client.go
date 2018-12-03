@@ -64,6 +64,7 @@ type Client struct {
 	valid      bool
 	prevCoreType   string
 	currCoreType   string
+	requestKey   string
 	request    map[string]interface{}
 	baseFileName string
 	sessionId  string
@@ -90,9 +91,6 @@ type Client struct {
 	ssRspC chan []byte  
 	done chan int
 
-
-
-	
 }
 
 
@@ -140,6 +138,9 @@ func   handleMessage(c *Client, msgType int, message []byte){
 			if "started" == c.engineState  {
 				log.Printf("%s ssound_cancel engine:%p\n", c.id, c.engine)
 				cancelEngine(c)
+			}
+			if msg["requestKey"] != nil {
+				c.requestKey = msg["requestKey"].(string)
 			}
 
 			if msg["userData"] != nil {
