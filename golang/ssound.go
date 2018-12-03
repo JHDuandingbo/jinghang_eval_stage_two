@@ -111,6 +111,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		ssResObj := ssObj["result"].(map[string]interface{})
 		ssReqObj := ssObj["params"].(map[string]interface{})["request"].(map[string]interface{})
 		rspCoreType := ssReqObj["coreType"].(string)
+		finalResObj["overall"] = "4.9";
 		switch rspCoreType {
 		case "en.sent.score":
 			finalResObj["sentence"] = c.request["refText"].(string)
@@ -159,6 +160,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 			finalResObj["scoreProFluency"] = strconv.FormatFloat(overall, 'f', -1, 32)
 		}
 	}
+	
 	finalBytes, err = json.Marshal(finalObj)
 	if nil != err {
 		log.Println("fail to stringify finalObj:", finalObj)

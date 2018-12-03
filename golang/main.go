@@ -26,6 +26,8 @@ func CreateDirIfNotExist(dir string) {
 
 func main() {
 
+	log.Println(configStr)
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	args := os.Args
 	if 2 != len(args) {
