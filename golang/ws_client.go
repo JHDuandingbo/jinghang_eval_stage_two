@@ -274,6 +274,7 @@ func (c *Client) writeMessage() {
 			//log.Println("DONE")
 			log.Printf("%s:disconnected, duration:%f seconds,current clients:%d\n", c.id, time.Since(c.connectTime).Seconds(), gMap.Count())
 			log.Printf("%s:ssound_delete engine:%p\n", c.id, c.engine)
+			deleteDecoder(c)
 			deleteEngine(c)
 			c.conn.Close()//could be more better let the writeMessage routine close the connection
 			gMap.Remove(c.port)

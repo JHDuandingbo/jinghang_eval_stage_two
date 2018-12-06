@@ -31,6 +31,21 @@ var ScoreConfigStr = `
     },
     "requestKey": "evaluation.part1.wordReading"
   },
+  "evaluation.part2.translation": {
+    "extra": "测评.part2.翻译",
+    "weights": {
+      "pron": 0,
+      "stress": 0,
+      "fluency": 0,
+      "liaison": 0,
+      "semanticAccuracy": 1,
+      "vocabulary": 0,
+      "grammar": 0,
+      "relevancy": 0
+    },
+    "requestKey": "evaluation.part2.translation"
+  },
+
   "evaluation.part2.situationalQA": {
     "extra": "测评.part2.情景问答",
     "weights": {
@@ -58,6 +73,20 @@ var ScoreConfigStr = `
       "relevancy": 0
     },
     "requestKey": "evaluation.part2.answerReading"
+  },
+  "evaluation.part3.translation": {
+    "extra": "测评.part3.翻译",
+    "weights": {
+      "pron": 0,
+      "stress": 0,
+      "fluency": 0,
+      "liaison": 0,
+      "semanticAccuracy": 1,
+      "vocabulary": 0,
+      "grammar": 0,
+      "relevancy": 0
+    },
+    "requestKey": "evaluation.part3.translation"
   },
   "evaluation.part3.wordReading": {
     "extra": "测评.part3.单词跟读",
@@ -115,6 +144,21 @@ var ScoreConfigStr = `
     },
     "requestKey": "evaluation.part3.phraseSentReading"
   },
+"evaluation.part4.sentReading": {
+    "extra": "测评.part4.句子跟读",
+    "weights": {
+      "pron": 1,
+      "stress": 1,
+      "fluency": 1,
+      "liaison": 0,
+      "semanticAccuracy": 0,
+      "vocabulary": 0,
+      "grammar": 0,
+      "relevancy": 0
+    },
+    "requestKey": "evaluation.part4.sentReading"
+  },
+
   "evaluation.part4.translation": {
     "extra": "测评.part4.翻译",
     "weights": {

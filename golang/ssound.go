@@ -66,7 +66,7 @@ var startTemplate = `
         "request":{ 
 		"coreType":"en.sent.score", 
 		"refText":"Well it must be a great experience for you and i think it can deepen your understanding about americon culture", 
-		"attachAudioUrl":0, 
+		"attachAudioUrl":1,
 		"rank":5
 	} 
 }`
@@ -135,7 +135,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 			details := ssResObj["details"].([]interface{})
 			for i, item := range details {
 				score := item.(map[string]interface{})["score"].(float64)
-				if score < 3 {
+				if score < 2 {
 					badWordIndex = append(badWordIndex, strconv.FormatInt(int64(i+1), 10))
 				}
 			}
@@ -144,8 +144,8 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		case "en.word.score":
 			finalResObj["sentence"] = c.request["refText"].(string)
 			finalResObj["scoreProNoAccent"] = ssResObj["pron"].(float64)
-			finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"]
-			finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
+			//finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"]
+			//finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
 			//finalResObj["scoreProNoAccent"] = strconv.FormatFloat(ssResObj["pron"].(float64), 'f', -1, 32)
 			//finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"]
 			//finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
@@ -156,24 +156,13 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 				implication := implicationArr[0].(string)
 				finalResObj["sentence"] = implication
 			}
-			overall := ssResObj["overall"].(float64)
-			/*
-				fluency := ssResObj["fluency"].(float64)
-				pron := ssResObj["pron"].(float64)
-
-				if fluency > 5 {
-					fluency = fluency / 20.0
-				}
-				if pron > 5 {
-					pron = pron / 20.0
-				}
-			*/
 			//finalResObj["scoreProNoAccent"] = strconv.FormatFloat(overall, 'f', -1, 32)
 			//finalResObj["scoreProStress"] = strconv.FormatFloat(overall, 'f', -1, 32)
 			//finalResObj["scoreProFluency"] = strconv.FormatFloat(overall, 'f', -1, 32)
-			finalResObj["scoreProNoAccent"] = overall
-			finalResObj["scoreProStress"] = overall
-			finalResObj["scoreProFluency"] = overall
+			//finalResObj["scoreProNoAccent"] = overall
+			//finalResObj["scoreProStress"] = overall
+			//finalResObj["scoreProFluency"] = overall
+			overall := ssResObj["overall"].(float64)
 			finalResObj["semanticAccuracy"] = overall
 		}
 
@@ -181,16 +170,19 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 			finalResObj["stress"] = finalResObj["scoreProStress"]
 		} else {
 			finalResObj["stress"] = 0.0
+			finalResObj["scoreProStress"] = 0.0
 		}
 		if finalResObj["scoreProNoAccent"] != nil {
 			finalResObj["pron"] = finalResObj["scoreProNoAccent"]
 		} else {
 			finalResObj["pron"] = 0.0
+			finalResObj["scoreProNoAccent"] = 0.0
 		}
 		if finalResObj["scoreProFluency"] != nil {
 			finalResObj["fluency"] = finalResObj["scoreProFluency"]
 		} else {
 			finalResObj["fluency"] = 0.0
+			finalResObj["scoreProFluency"] = 0.0
 		}
 		if finalResObj["semanticAccuracy"] == nil {
 			finalResObj["semanticAccuracy"] = 0.0
@@ -210,22 +202,17 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 
 		log.Printf("%s requestKey:%s", c.id, c.requestKey)
 		if c.requestKey == "" {
-			overall := 0.0
-			count := 0
-			for key, val := range finalResObj {
-				if key == "badWordIndex" || key == "sentence" || key == "missingWordIndex" {
-					continue
-				}
-				overall += val.(float64)
-				if 0 != val {
-					count++
-				}
-			}
-			log.Printf("%s overall:%f, count:%d\n", c.id, overall, count)
-			finalResObj["overall"] = overall / float64(count)
+			//for old version apks, they only took scoreProNoAccent for marking stars
 
-			finalObj["errMsg"] = "Illegal request Key"
-			finalObj["errId"] = 1
+			switch rspCoreType {
+			case "en.pqan.score", "en.retell.score", "en.pict.score":
+				finalResObj["scoreProNoAccent"] = finalResObj["semanticAccuracy"]
+				finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"] 
+				finalResObj["scoreProFluency"] =finalResObj["scoreProNoAccent"] 
+			case "en.word.score":
+				finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"] 
+				finalResObj["scoreProFluency"] =finalResObj["scoreProNoAccent"] 
+			}
 		} else {
 			//	scoreConfig
 			requestTypeArr := strings.Split(c.requestKey, ".")
@@ -245,7 +232,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 				log.Printf("%s overall:%f, count:%d\n", c.id, overall, count)
 				finalResObj["overall"] = overall / (float64)(count)
 			} else {
-				log.Println("no score config found with requestType:%s", requestType)
+				log.Printf("no score config found with requestType:%s", requestType)
 				overall := 0.0
 				count := 0
 				for key, val := range finalResObj {
@@ -263,6 +250,8 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 
 		}
 
+		
+		log.Println(finalResObj)
 		for key, val := range finalResObj {
 			if key == "badWordIndex" || key == "sentence" || key == "missingWordIndex" {
 				finalResObjWithStrVal[key] = finalResObj[key]
@@ -308,6 +297,15 @@ func startEngine(c *Client) {
 			valObj["text"] = val.(string)
 			imArr = append(imArr, valObj)
 		}
+
+		/*
+			for _, val := range c.request["implications"].([]interface{}) {
+				valObj := make(map[string]interface{})
+				valObj["text"] = val.(string)
+				imArr = append(imArr, valObj)
+			}
+		*/
+
 		for _, val := range c.request["keywords"].([]interface{}) {
 			valObj := make(map[string]interface{})
 			valObj["text"] = val.(string)
@@ -366,7 +364,7 @@ func feedEngine(c *Client, data []byte) {
 			//Save2File(c, ".pcm", batch)
 			cdata := C.CBytes(rawData)
 			//log.Println("feed compressed")
-			feedRes := C.ssound_feed(c.engine, cdata, C.int(len(data)))
+			feedRes := C.ssound_feed(c.engine, cdata, C.int(len(rawData)))
 			Save2File(c, ".pcm", rawData)
 			C.free(cdata)
 			if 0 != feedRes {
