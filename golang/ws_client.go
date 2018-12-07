@@ -8,18 +8,18 @@ import (
 	"log"
 	"net"
 	"net/http"
+//    "path/filepath"
 	//"net/url"
 	//"strings"
 	//"strconv"
 	//"io/ioutil"
 	"encoding/json"
+	//"os"
 	"time"
-	"os"
 	//"github.com/mattn/go-pointer"
 
 	"./pkg/ConcurrentMap"
 	"github.com/gorilla/websocket"
-	
 )
 
 const (
@@ -35,7 +35,7 @@ const (
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024 * 10 * 10
 	similarityURL  = "http://140.143.138.146:6000/similarity"
-	audioDir = "/tmp/JinghangAudio/"
+	//AUDIODIR       = "/tmp/JinghangAudio/"
 )
 
 var gMap = cmap.New()
@@ -49,10 +49,11 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-type WSMsg struct{
+type WSMsg struct {
 	msgType int
 	message []byte
 }
+
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
 	//hub *Hub
@@ -61,81 +62,52 @@ type Client struct {
 	conn *websocket.Conn
 
 	//refText string
-	valid      bool
-	prevCoreType   string
-	currCoreType   string
+	valid        bool
+	prevCoreType string
+	currCoreType string
 	requestKey   string
-	request    map[string]interface{}
-	baseFileName string
-	sessionId  string
-	userData   string
-	compressed int
+	request      map[string]interface{}
+	sessionId    string
+	userData     string
+	compressed   int
 	binaryBuffer []byte
-	engine     *C.struct_ssound
-	decoder  *C.struct_stSirenDecoder
+	engine       *C.struct_ssound
+	decoder      *C.struct_stSirenDecoder
 
 	engineState string
 
 	id   string
 	port string
 
-
 	XFStarted bool
 	XFDone    chan string
 	//XFBin chan []byte
-	XFConn   *websocket.Conn
-	XFBuffer []byte
-	connectTime   time.Time
+	XFConn      *websocket.Conn
+	XFBuffer    []byte
+	connectTime time.Time
+	startTimePerRequest time.Time
 
-	ssReqC chan WSMsg  
-	ssRspC chan []byte  
-	done chan int
-
+	ssReqC chan WSMsg
+	ssRspC chan []byte
+	done   chan int
 }
 
-
-func Save2File(c *Client, suffix string, message []byte){
-
-	//log.Println("Save meta\n\n")
-	filePath := audioDir + c.baseFileName + suffix
-	if suffix == ".json" {
-		//filePath := audioDir + c.id + "." +  c.requestTime.Format(time.RFC3339Nano)+ ".json"
-		f, err := os.Create(filePath)
-		if  err !=  nil{
-			log.Printf("%s fail to create file %s", c.id, filePath)
-			return
-		}
-		defer f.Close()
-		if _,err := f.Write(message); err != nil{
-			log.Printf("%s fail to write to  file %s", c.id, filePath)
-			return
-		}
-	}else if suffix == ".pcm"{
-		    f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		    if err != nil {
-			log.Printf("%s fail to open pcm file  %s", c.id, filePath)
-		    }
-		   defer f.Close()
-		    if _, err := f.Write(message); err != nil {
-			log.Printf("%s fail to write to pcm file  %s", c.id, filePath)
-		    }
-	}
-}
-
-
-func   handleMessage(c *Client, msgType int, message []byte){
+func handleMessage(c *Client, msgType int, message []byte) {
 	if msgType == websocket.TextMessage {
-		log.Printf("%s:RECV text: %s\n",c.id,  string(message))
+		log.Printf("%s:RECV text: %s\n", c.id, string(message))
 		var msg map[string]interface{}
 		if err := json.Unmarshal(message, &msg); err != nil {
 			panic(err)
 		}
 		switch msg["action"].(string) {
 		case "start":
-			t := time.Now()
-			c.baseFileName = c.id + "." + t.Format(time.RFC3339Nano)
+			//t := time.Now()
+			c.startTimePerRequest = time.Now()
+			//c.baseFileName = c.id + "." + t.Format(time.RFC3339Nano)
+			//c.startTimePerRequest = t.Format(time.RFC3339Nano)
+			//c.startTimePerRequest = t.Format(time.RFC3339Nano)
 			Save2File(c, ".json", message)
-			if "started" == c.engineState  {
+			if "started" == c.engineState {
 				log.Printf("%s ssound_cancel engine:%p\n", c.id, c.engine)
 				cancelEngine(c)
 			}
@@ -162,15 +134,15 @@ func   handleMessage(c *Client, msgType int, message []byte){
 			c.prevCoreType = c.currCoreType
 			c.currCoreType = coreType.(string)
 			switch c.currCoreType {
-				case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
-					log.Printf("prevCoreType:%s, currCoreType:%s", c.prevCoreType, c.currCoreType)
-					if c.prevCoreType != "" &&  c.prevCoreType !=  c.currCoreType{
-								deleteEngine(c)
-								initEngine(c)
-					}
-					startEngine(c)
-				default:
-					log.Println("illegal coreType:", string(message))
+			case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
+				log.Printf("prevCoreType:%s, currCoreType:%s", c.prevCoreType, c.currCoreType)
+				if c.prevCoreType != "" && c.prevCoreType != c.currCoreType {
+					deleteEngine(c)
+					initEngine(c)
+				}
+				startEngine(c)
+			default:
+				log.Println("illegal coreType:", string(message))
 			}
 		case "stop":
 			switch c.currCoreType {
@@ -181,11 +153,10 @@ func   handleMessage(c *Client, msgType int, message []byte){
 		case "cancel":
 			cancelEngine(c)
 		default:
-			log.Println("%s:illegal action:", c.id ,string(message))
+			log.Println("%s:illegal action:", c.id, string(message))
 		}
 	} else if msgType == websocket.BinaryMessage {
 		log.Printf("recv binary len: %d, coreType:%s\n", len(message), c.currCoreType)
-		//Save2File(c, ".pcm", message)
 		switch c.currCoreType {
 		case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
 			feedEngine(c, message)
@@ -194,6 +165,7 @@ func   handleMessage(c *Client, msgType int, message []byte){
 	}
 
 }
+
 // readMessage pumps messages from the websocket connection to the hub.
 //
 // The application runs readMessage in a per-connection goroutine. The application
@@ -218,7 +190,7 @@ func (c *Client) readMessage() {
 			log.Printf("ws.ReadMessage: %v", err)
 			break
 		} else {
-			c.ssReqC <- WSMsg{msgType:msgType, message:message};
+			c.ssReqC <- WSMsg{msgType: msgType, message: message}
 		}
 	} //end for
 }
@@ -230,7 +202,7 @@ func (c *Client) readMessage() {
 func (c *Client) writeMessage() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
-			ticker.Stop()
+		ticker.Stop()
 	}()
 	initEngine(c)
 	for {
@@ -269,14 +241,14 @@ func (c *Client) writeMessage() {
 				return
 			}
 		case wsMsg := <-c.ssReqC:
-			handleMessage(c,wsMsg.msgType, wsMsg.message)
-		case   <-c.done:
+			handleMessage(c, wsMsg.msgType, wsMsg.message)
+		case <-c.done:
 			//log.Println("DONE")
 			log.Printf("%s:disconnected, duration:%f seconds,current clients:%d\n", c.id, time.Since(c.connectTime).Seconds(), gMap.Count())
 			log.Printf("%s:ssound_delete engine:%p\n", c.id, c.engine)
 			deleteDecoder(c)
 			deleteEngine(c)
-			c.conn.Close()//could be more better let the writeMessage routine close the connection
+			c.conn.Close() //could be more better let the writeMessage routine close the connection
 			gMap.Remove(c.port)
 			return
 		}
@@ -294,12 +266,12 @@ func getIpPort(req *http.Request) (id string, port string) {
 	}
 	id = ip + ":" + port
 
-/*
-	portN, err = strconv.ParseInt(port, 10, 32)
-	if err != nil {
-		log.Println("port number illegal")
-	}
-*/
+	/*
+		portN, err = strconv.ParseInt(port, 10, 32)
+		if err != nil {
+			log.Println("port number illegal")
+		}
+	*/
 
 	userIP := net.ParseIP(ip)
 	if userIP == nil {
@@ -324,10 +296,10 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	id, port := getIpPort(r)
 	//log.Printf("id :%s, port:%d\n", id, port)
 	//client := &Client{hub: hub, connectTime: time.Now(), conn: conn, id: id, port: port, valid: true, ssRspC: make(chan []byte, 4096), ssReqC:make(chan WSMsg, 1)}
-	client := &Client{connectTime: time.Now(), conn: conn, id: id, port: port, valid: true, engineState: "deleted", ssRspC: make(chan []byte, 4096), ssReqC:make(chan WSMsg, 1), done:make(chan int, 1)}
+	client := &Client{connectTime: time.Now(), conn: conn, id: id, port: port, valid: true, engineState: "deleted", ssRspC: make(chan []byte, 4096), ssReqC: make(chan WSMsg, 1), done: make(chan int, 1)}
 	//client.hub.register <- client
 	initDecoder(client)
-//	client.hub.regC <- RegMsg{port: port, client: client}
+	//	client.hub.regC <- RegMsg{port: port, client: client}
 	gMap.Set(port, client)
 
 	// Allow collection of memory referenced by the caller by doing all work in

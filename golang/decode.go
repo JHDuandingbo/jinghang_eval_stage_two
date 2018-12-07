@@ -35,25 +35,25 @@ import "C" //这里可看作封装的伪包C, 这条语句要紧挨着上面的�
 
 //import "encoding/hex"
 
-
-func initDecoder(c* Client){
+func initDecoder(c *Client) {
 	c.decoder = C.Siren7_NewDecoder(16000)
 }
-func deleteDecoder(c* Client){
+func deleteDecoder(c *Client) {
 	C.Siren7_CloseDecoder(c.decoder)
 	c.decoder = nil
 }
-func decodeBinary(c *Client,inBuf []byte) []byte{
-		cIBuf := C.CBytes(inBuf)
-		defer C.free(cIBuf)
-		outBuf := make([]byte, 640)
-		cOBuf := C.CBytes(outBuf)
-		defer C.free(cOBuf)
-		C._Siren7_DecodeFrame(c.decoder, cIBuf, cOBuf)
-		gOBuf := C.GoBytes(cOBuf, C.int(len(outBuf)))
-		return gOBuf
+func decodeBinary(c *Client, inBuf []byte) []byte {
+	cIBuf := C.CBytes(inBuf)
+	defer C.free(cIBuf)
+	outBuf := make([]byte, 640)
+	cOBuf := C.CBytes(outBuf)
+	defer C.free(cOBuf)
+	C._Siren7_DecodeFrame(c.decoder, cIBuf, cOBuf)
+	gOBuf := C.GoBytes(cOBuf, C.int(len(outBuf)))
+	return gOBuf
 
 }
+
 /*
 
 func main() {

@@ -164,6 +164,8 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 			//finalResObj["scoreProFluency"] = overall
 			overall := ssResObj["overall"].(float64)
 			finalResObj["semanticAccuracy"] = overall
+			finalResObj["grammar"] = overall
+			finalResObj["vocabulary"] = overall
 		}
 
 		if finalResObj["scoreProStress"] != nil {
@@ -207,11 +209,15 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 			switch rspCoreType {
 			case "en.pqan.score", "en.retell.score", "en.pict.score":
 				finalResObj["scoreProNoAccent"] = finalResObj["semanticAccuracy"]
-				finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"] 
-				finalResObj["scoreProFluency"] =finalResObj["scoreProNoAccent"] 
+				finalResObj["scoreProStress"] = finalResObj["semanticAccuracy"]
+				finalResObj["scoreProFluency"] = finalResObj["semanticAccuracy"]
+				//finalResObj["semanticAccuracy"] = finalResObj["semanticAccuracy"]
+				//finalResObj["relevancy"] = finalResObj["semanticAccuracy"]
+				//finalResObj["grammar"] = finalResObj["semanticAccuracy"]
+				//finalResObj["vocabulary"] = finalResObj["semanticAccuracy"]
 			case "en.word.score":
-				finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"] 
-				finalResObj["scoreProFluency"] =finalResObj["scoreProNoAccent"] 
+				finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"]
+				finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
 			}
 		} else {
 			//	scoreConfig
@@ -229,6 +235,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 						count++
 					}
 				}
+				log.Println("weights:", weightConfig)
 				log.Printf("%s overall:%f, count:%d\n", c.id, overall, count)
 				finalResObj["overall"] = overall / (float64)(count)
 			} else {
@@ -250,7 +257,6 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 
 		}
 
-		
 		log.Println(finalResObj)
 		for key, val := range finalResObj {
 			if key == "badWordIndex" || key == "sentence" || key == "missingWordIndex" {
@@ -344,6 +350,7 @@ func startEngine(c *Client) {
 
 func feedEngine(c *Client, data []byte) {
 	if c.compressed == 0 {
+	    Save2File(c, ".pcm", data)
 		cdata := C.CBytes(data)
 		defer C.free(cdata)
 		//log.Printf("%s, ssound_feed, c.engine:%p, cdata:%p, data len:%d\n", c.id, c.engine, cdata, len(data))

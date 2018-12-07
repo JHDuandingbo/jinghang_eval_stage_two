@@ -15,14 +15,7 @@ import (
 
 //var hub *Hub
 
-func CreateDirIfNotExist(dir string) {
-      if _, err := os.Stat(dir); os.IsNotExist(err) {
-              err = os.MkdirAll(dir, 0755)
-              if err != nil {
-                      panic(err)
-              }
-      }
-}
+
 
 func main() {
 
@@ -37,10 +30,7 @@ func main() {
 	addr := "0.0.0.0:" + args[1]
 	log.Println("Server listen addr ", addr)
 
-
-	CreateDirIfNotExist(audioDir)
-	// hub = newHub()
-	// go hub.run()
+//	CreateDirIfNotExist(audioDir)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		//serveWs(hub, w, r)
 		serveWs(w, r)
