@@ -84,7 +84,7 @@ func ssoundCallback(key C.int, cmsg *C.char, size C.int) {
 		finalBytes := buildRSP(c, []byte(msg))
 		c.ssRspC <- finalBytes
 	} else {
-		log.Printf("%s fail to get * Client from gmap with port:%d\n", c.id, int(key))
+		log.Printf("fail to get  Client from gmap with port:%d, unrecognized client\n",  int(key))
 	}
 	//hub.msgC <- Msg{port: int64(port), ssoundRSP: []byte(gmsg)}
 	//hub.recvC <- Msg{port: int64(port), ssoundRSP: []byte(gmsg)}
@@ -123,9 +123,6 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		switch rspCoreType {
 		case "en.sent.score":
 			finalResObj["sentence"] = c.request["refText"].(string)
-			//finalResObj["scoreProStress"] = strconv.FormatFloat(ssResObj["rhythm"].(map[string]interface{})["stress"].(float64), 'f', -1, 32)
-			//finalResObj["scoreProFluency"] = strconv.FormatFloat(ssResObj["fluency"].(map[string]interface{})["overall"].(float64), 'f', -1, 32)
-			//finalResObj["scoreProNoAccent"] = strconv.FormatFloat(ssResObj["pron"].(float64), 'f', -1, 32)
 			finalResObj["scoreProStress"] = ssResObj["rhythm"].(map[string]interface{})["stress"].(float64)
 			finalResObj["scoreProFluency"] = ssResObj["fluency"].(map[string]interface{})["overall"].(float64)
 			finalResObj["scoreProNoAccent"] = ssResObj["pron"].(float64)
@@ -141,14 +138,14 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 			}
 			finalResObj["missingWordIndex"] = missingWordIndex
 			finalResObj["badWordIndex"] = badWordIndex
+		case "en.pred.score":
+			finalResObj["sentence"] = c.request["refText"].(string)
+			finalResObj["scoreProNoAccent"] = ssResObj["pron"].(float64)
+			finalResObj["scoreProFluency"] = ssResObj["fluency"].(float64)
+			//finalResObj["scoreProStress"] = ssResObj["fluency"].(float64)
 		case "en.word.score":
 			finalResObj["sentence"] = c.request["refText"].(string)
 			finalResObj["scoreProNoAccent"] = ssResObj["pron"].(float64)
-			//finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"]
-			//finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
-			//finalResObj["scoreProNoAccent"] = strconv.FormatFloat(ssResObj["pron"].(float64), 'f', -1, 32)
-			//finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"]
-			//finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
 		case "en.pqan.score", "en.retell.score", "en.pict.score":
 			//finalResObj["sentence"] =c.request["refText"].(string)
 			if rspCoreType == "en.retell.score" {
@@ -290,6 +287,7 @@ func startEngine(c *Client) {
 	if err := json.Unmarshal([]byte(startTemplate), &startObj); err != nil {
 		panic(err) // do not use panic here
 	}
+	///should all change the coreType according to requestKey
 
 	if "en.sim.score" == c.currCoreType {
 		ssReqObj := make(map[string]interface{})
@@ -303,15 +301,6 @@ func startEngine(c *Client) {
 			valObj["text"] = val.(string)
 			imArr = append(imArr, valObj)
 		}
-
-		/*
-			for _, val := range c.request["implications"].([]interface{}) {
-				valObj := make(map[string]interface{})
-				valObj["text"] = val.(string)
-				imArr = append(imArr, valObj)
-			}
-		*/
-
 		for _, val := range c.request["keywords"].([]interface{}) {
 			valObj := make(map[string]interface{})
 			valObj["text"] = val.(string)
@@ -326,6 +315,20 @@ func startEngine(c *Client) {
 	} else {
 		startObj["request"] = c.request
 	}
+
+	if "" != c.requestKey {
+		requestTypeArr := strings.Split(c.requestKey, ".")
+		requestType := strings.Join(requestTypeArr[1:len(requestTypeArr)-1], ".")
+		if requestType == "part5.paragraphReading" {
+			//ssReqObj := make(map[string]interface{})
+			//startObj["request"]["coreType"] = "en.pred.score"
+			startObj["request"].(map[string]interface{})["coreType"] = "en.pred.score"
+			//startObj["request"]["refText"] = "en.pred.score"
+			//ssReqObj["refText"] = c.request["refText"]
+			//startObj["request"] = ssReqObj
+		}
+	}
+
 	startStr, _ := json.Marshal(startObj)
 
 	cStartStr := C.CString(string(startStr))
@@ -350,7 +353,7 @@ func startEngine(c *Client) {
 
 func feedEngine(c *Client, data []byte) {
 	if c.compressed == 0 {
-	    Save2File(c, ".pcm", data)
+		Save2File(c, ".pcm", data)
 		cdata := C.CBytes(data)
 		defer C.free(cdata)
 		//log.Printf("%s, ssound_feed, c.engine:%p, cdata:%p, data len:%d\n", c.id, c.engine, cdata, len(data))

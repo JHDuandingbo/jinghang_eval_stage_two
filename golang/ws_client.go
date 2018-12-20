@@ -8,7 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
-//    "path/filepath"
+	//    "path/filepath"
 	//"net/url"
 	//"strings"
 	//"strconv"
@@ -82,9 +82,9 @@ type Client struct {
 	XFStarted bool
 	XFDone    chan string
 	//XFBin chan []byte
-	XFConn      *websocket.Conn
-	XFBuffer    []byte
-	connectTime time.Time
+	XFConn              *websocket.Conn
+	XFBuffer            []byte
+	connectTime         time.Time
 	startTimePerRequest time.Time
 
 	ssReqC chan WSMsg
@@ -135,8 +135,8 @@ func handleMessage(c *Client, msgType int, message []byte) {
 			c.currCoreType = coreType.(string)
 			switch c.currCoreType {
 			case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
-				log.Printf("prevCoreType:%s, currCoreType:%s", c.prevCoreType, c.currCoreType)
 				if c.prevCoreType != "" && c.prevCoreType != c.currCoreType {
+					log.Printf("prevCoreType:%s, currCoreType:%s", c.prevCoreType, c.currCoreType)
 					deleteEngine(c)
 					initEngine(c)
 				}
@@ -156,7 +156,7 @@ func handleMessage(c *Client, msgType int, message []byte) {
 			log.Println("%s:illegal action:", c.id, string(message))
 		}
 	} else if msgType == websocket.BinaryMessage {
-		log.Printf("recv binary len: %d, coreType:%s\n", len(message), c.currCoreType)
+		//log.Printf("recv binary len: %d, coreType:%s\n", len(message), c.currCoreType)
 		switch c.currCoreType {
 		case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
 			feedEngine(c, message)

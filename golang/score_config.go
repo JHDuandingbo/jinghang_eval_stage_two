@@ -339,6 +339,20 @@ var ScoreConfigStr = `
       "grammar": 0,
       "relevancy": 0
     }
+  },
+	"ifun.italk.dub": {
+    "extra": "ifun.italk.配音挑战",
+    "requestKey": "ifun.italk.dub",
+    "weights": {
+      "pron": 1,
+      "stress": 1,
+      "fluency": 1,
+      "liaison": 0,
+      "semanticAccuracy": 0,
+      "vocabulary": 0,
+      "grammar": 0,
+      "relevancy": 0
+    }
   }
 }
 `
