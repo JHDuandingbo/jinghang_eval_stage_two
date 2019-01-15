@@ -19,7 +19,8 @@ import (
 	//"github.com/mattn/go-pointer"
 
 	"./pkg/ConcurrentMap"
-	"github.com/gorilla/websocket"
+	//"github.com/gorilla/websocket"
+	"./pkg/gorilla/websocket"
 )
 
 const (

@@ -219,22 +219,32 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		} else {
 			//	scoreConfig
 			requestTypeArr := strings.Split(c.requestKey, ".")
+			requestOrderStr := requestTypeArr[len(requestTypeArr) -1]
 			requestType := strings.Join(requestTypeArr[:len(requestTypeArr)-1], ".")
 			if scoreConfig[requestType] != nil {
-				//log.Println(
 				weightConfig := scoreConfig[requestType].(map[string]interface{})["weights"].(map[string]interface{})
-				overall := 0.0
+				sum := 0.0
 				count := 0
 				for key, val := range weightConfig {
 					//log.Println(finalResObj)
-					overall += (val.(float64)) * finalResObj[key].(float64)
+					sum += (val.(float64)) * finalResObj[key].(float64)
 					if 0 != val.(float64) {
 						count++
 					}
 				}
 				log.Println("weights:", weightConfig)
-				log.Printf("%s overall:%f, count:%d\n", c.id, overall, count)
-				finalResObj["overall"] = overall / (float64)(count)
+				log.Printf("%s overall:%f, count:%d\n", c.id, sum, count)
+				overall := sum / (float64)(count)
+				finalResObj["overall"] = overall
+
+
+				if requestType == "ifun.italk.dub" {
+					if("-1" == requestOrderStr){
+							postITalkScore(c, overall)
+					}else{
+							go postITalkScore(c, overall)
+					}
+				}
 			} else {
 				log.Printf("no score config found with requestType:%s", requestType)
 				overall := 0.0

@@ -1,23 +1,12 @@
-// Copyright 2013 The Gorilla WebSocket Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package main
 
 import (
-	//	"flag"
 	"log"
 	"os"
-	//	"time"
 	"net/http"
-	//	"runtime/pprof"
+  //"./pkg/sirupsen/logrus"
 )
-
-//var hub *Hub
-
 func main() {
-
-	//log.Println(configStr)
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	args := os.Args
@@ -28,9 +17,7 @@ func main() {
 	addr := "0.0.0.0:" + args[1]
 	log.Println("Server listen addr ", addr)
 
-	//	CreateDirIfNotExist(audioDir)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		//serveWs(hub, w, r)
 		serveWs(w, r)
 	})
 	err := http.ListenAndServe(addr, nil)
