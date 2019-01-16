@@ -6,8 +6,8 @@ package main
 #include <stdio.h>
 #include <stdlib.h>
 
-#cgo CFLAGS: -I./include
-#cgo LDFLAGS: -L./lib -lssound -lsiren
+#cgo CFLAGS: -I../include
+#cgo LDFLAGS: -L../lib -lssound -lsiren
 
 
 //extern void ssoundCallback(int  userData,const  char * message, int len);

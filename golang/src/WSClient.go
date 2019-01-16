@@ -4,8 +4,8 @@
 package main
 
 import (
-	"./pkg/ConcurrentMap"
-	"./pkg/gorilla/websocket"
+	"../pkg/ConcurrentMap"
+	"../pkg/gorilla/websocket"
 	"C"
 	"encoding/json"
 	//"log"
