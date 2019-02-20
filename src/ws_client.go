@@ -128,7 +128,7 @@ func handleMessage(c *Client, msgType int, message []byte) {
 			c.prevCoreType = c.currCoreType
 			c.currCoreType = coreType.(string)
 			switch c.currCoreType {
-			case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
+			case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score", "en.pred.score":
 				if c.prevCoreType != "" && c.prevCoreType != c.currCoreType {
 					sugar.Infow("try deleteEngine, currCoreType is different from prevCoreType ", "client", c.id)
 					deleteEngine(c)
