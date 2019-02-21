@@ -340,7 +340,6 @@ func startEngine(c *Client) {
 	}
 
 	startStr, _ := json.Marshal(startObj)
-	sugar.Infow("ssound_start()", "client", c.id, "args", startObj)
 
 	cStartStr := C.CString(string(startStr))
 	defer C.free(unsafe.Pointer(cStartStr))
@@ -351,6 +350,7 @@ func startEngine(c *Client) {
 	}
 
 	//	initEngine(c)
+	sugar.Infow("ssound_start()", "client", c.id, "args", startObj)
 	startRes := C._ssound_start(c.engine, cStartStr, C.int(portN))
 	if 0 != startRes {
 		sugar.Warnw("ssound_start() failed", "client", c.id, "args", startStr)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"math/rand"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -58,6 +59,7 @@ func newPostRequest(uri string, params map[string]string) (*http.Request, error)
 
 //func postITalkScore(score string, stage string, iTalkId string, token string){
 func filteriTalkScore(c *Client, score float64) float64 {
+	rand.Seed(time.Now().UnixNano())
 	userData := c.userData
 
 	if userData == "" {
@@ -77,13 +79,20 @@ func filteriTalkScore(c *Client, score float64) float64 {
 		return score
 	}
 
+///BUG!!!!!!!!!!!!!!!!!!!!!
 	maxStage:=300.0
-	nscore := score * (1.0 - stage/maxStage)
-	if nscore <= 0{
-		return score
-	}else{
-		return nscore
+	nscore := score * (1.0 - 1.2 * stage/maxStage)
+	if nscore > 0{
+		score = nscore
 	}
+	baseStage := float64(80)
+	if stage >=  baseStage {
+        deadStage := float64(rand.Intn(6)) +baseStage
+		if stage >= float64(deadStage) {
+			score =   rand.Float64() * 2.5
+		}
+	}
+		return score
 
 }
 func postITalkScore(c *Client, score float64) {
