@@ -85,9 +85,10 @@ func filteriTalkScore(c *Client, score float64) float64 {
 	if nscore > 0{
 		score = nscore
 	}
-	baseStage := float64(80)
-	if stage >=  baseStage {
-        deadStage := float64(rand.Intn(6)) +baseStage
+	//italk_max_stage := float64(80)
+		sugar.Infow("filteriTalkScore", "client", c.id, "italk_max_stage", italk_max_stage)
+	if stage >=  float64(italk_max_stage) {
+        deadStage := float64(rand.Intn(6)) +italk_max_stage
 		if stage >= float64(deadStage) {
 			score =   rand.Float64() * 2.5
 		}

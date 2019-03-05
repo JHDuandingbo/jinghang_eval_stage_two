@@ -26,6 +26,7 @@ var (
 //runtime config
 	_PORT_  = 3001
 	_ITALK_URL  = "http://140.143.238.102:5432/scoreITalk"
+	italk_max_stage float64
 
 )
 func readConfig(filename string, defaults map[string]interface{}) (*viper.Viper, error) {
@@ -47,6 +48,7 @@ func main() {
 			"prod_port":3001,
 			"italk_test_url":"http://140.143.238.102:5432/scoreITalk",
 			"italk_prod_url":"http://www.jinghangapps.com/jingxiaoai/scoreITalk",
+			"italk_max_stage":20,
 	})
 	if err != nil {
 		//panic(fmt.Errorf("Error when reading config: %v\n", err))
@@ -58,6 +60,8 @@ func main() {
 	prod_port := v1.GetInt("prod_port")
 	italk_test_url := v1.GetString("italk_test_url")
 	italk_prod_url := v1.GetString("italk_prod_url")
+	//italk_max_stage = v1.GetInt("italk_max_stage")
+	italk_max_stage = v1.GetFloat64("italk_max_stage")
 
 	if _TYPE_ ==  _TEST_TAG_ {
 		_ITALK_URL = italk_test_url

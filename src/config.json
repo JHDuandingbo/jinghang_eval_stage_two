@@ -1,6 +1,7 @@
 {
-    "test_port":3003,
-    "prod_port":3001,
+    "test_port":3001,
+    "prod_port":3000,
     "italk_test_url":"http://140.143.238.102:5432/scoreITalk",
-    "italk_prod_url":"http://www.jinghangapps.com/jingxiaoai/scoreITalk"
+    "italk_prod_url":"http://www.jinghangapps.com/jingxiaoai/scoreITalk",
+    "italk_max_stage":80
 }

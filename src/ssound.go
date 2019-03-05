@@ -67,6 +67,7 @@ var startTemplate = `
 		"coreType":"en.sent.score", 
 		"refText":"Well it must be a great experience for you and i think it can deepen your understanding about americon culture", 
 		"attachAudioUrl":1,
+		"outputPhones":1,
 		"rank":5
 	} 
 }`
@@ -323,6 +324,12 @@ func startEngine(c *Client) {
 		delete(ssReqObj, "implications")
 		startObj["request"] = ssReqObj
 	} else {
+		if c.currCoreType == "en.sent.score" {
+			c.request["outputPhones"] = 1
+			c.request["phdet"] = 1
+			c.request["syllable"] = 1
+			c.request["syldet"] = 1
+		}
 		startObj["request"] = c.request
 	}
 
