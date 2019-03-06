@@ -14,7 +14,7 @@ fi
 #CGO_LDFLAGS="-Wl,-rpath=./lib "  go build -a  -v  -ldflags "-X main._VERSION_=$_version -X main._TYPE_=$_type  -X main._BUILD_TIME_=$_build_time " src/main   -o speech_eval
 go build   -v  -ldflags "-X main._VERSION_=$_version -X main._TYPE_=$_type  -X main._BUILD_TIME_=$_build_time " ./src/main   
 
-cp -r  ./main  ./deps/lib  ./bin
+cp -r  ./main    ./bin/speech_eval
 
 echo $GOPATH
 

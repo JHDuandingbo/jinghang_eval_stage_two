@@ -5,11 +5,9 @@ package main
 
 import (
 	"cmap"
-	//"gorilla/websocket"
-	"github.com/gorilla/websocket"
 	"C"
 	"encoding/json"
-	//"log"
+	"github.com/gorilla/websocket"
 	"net"
 	"net/http"
 	"time"

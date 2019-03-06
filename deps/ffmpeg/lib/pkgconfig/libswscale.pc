@@ -1,0 +1,14 @@
+prefix=/home/fatcat/gotest/goav/third_party/FFmpeg/output
+exec_prefix=${prefix}
+libdir=/home/fatcat/gotest/goav/third_party/FFmpeg/output/lib
+includedir=/home/fatcat/gotest/goav/third_party/FFmpeg/output/include
+
+Name: libswscale
+Description: FFmpeg image rescaling library
+Version: 5.4.100
+Requires: 
+Requires.private: libavutil >= 56.26.100
+Conflicts:
+Libs: -L${libdir}  -lswscale 
+Libs.private: -lm
+Cflags: -I${includedir}

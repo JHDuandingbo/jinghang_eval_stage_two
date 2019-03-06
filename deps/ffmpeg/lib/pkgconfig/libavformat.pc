@@ -1,0 +1,14 @@
+prefix=/home/fatcat/gotest/goav/third_party/FFmpeg/output
+exec_prefix=${prefix}
+libdir=/home/fatcat/gotest/goav/third_party/FFmpeg/output/lib
+includedir=/home/fatcat/gotest/goav/third_party/FFmpeg/output/include
+
+Name: libavformat
+Description: FFmpeg container format library
+Version: 58.26.101
+Requires: 
+Requires.private: libavcodec >= 58.47.102, libswresample >= 3.4.100, libavutil >= 56.26.100
+Conflicts:
+Libs: -L${libdir}  -lavformat 
+Libs.private: -lm -lz
+Cflags: -I${includedir}

@@ -1,0 +1,14 @@
+prefix=/home/fatcat/gotest/goav/third_party/FFmpeg/output
+exec_prefix=${prefix}
+libdir=/home/fatcat/gotest/goav/third_party/FFmpeg/output/lib
+includedir=/home/fatcat/gotest/goav/third_party/FFmpeg/output/include
+
+Name: libavdevice
+Description: FFmpeg device handling library
+Version: 58.6.101
+Requires: 
+Requires.private: libavfilter >= 7.48.100, libswscale >= 5.4.100, libavformat >= 58.26.101, libavcodec >= 58.47.102, libswresample >= 3.4.100, libavutil >= 56.26.100
+Conflicts:
+Libs: -L${libdir}  -lavdevice 
+Libs.private: -lm -lxcb -lxcb-shm -lxcb -lxcb-shape -lxcb -lxcb-xfixes -lxcb-render -lxcb-shape -lxcb -lasound
+Cflags: -I${includedir}

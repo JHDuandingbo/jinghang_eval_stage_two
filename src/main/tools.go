@@ -68,6 +68,7 @@ func Save2File(c *Client, suffix string, message []byte) error {
 			return err
 		}
 	} else if suffix == ".pcm" {
+		c.request["pcm_path"] = filePath
 		f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		defer f.Close()
 		if err != nil {

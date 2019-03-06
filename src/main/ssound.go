@@ -6,8 +6,8 @@ package main
 #include <stdio.h>
 #include <stdlib.h>
 
-#cgo CFLAGS: -I../../deps/include
-#cgo LDFLAGS: -L../../deps/lib -lssound -lsiren -Wl,-rpath=./lib
+#cgo CFLAGS: -I../../deps/ssound/include
+#cgo LDFLAGS: -L../../deps/ssound/lib -lssound -lsiren -Wl,-rpath=./lib
 
 
 //extern void ssoundCallback(int  userData,const  char * message, int len);
@@ -95,7 +95,6 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		panic(err) // do not use panic here
 	}
 
-
 	var ssObj map[string]interface{}
 	if err := json.Unmarshal([]byte(ssData), &ssObj); err != nil {
 		panic(err) // do not use panic here
@@ -123,6 +122,8 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		//finalResObj["overall"] = "4.9";
 		switch rspCoreType {
 		case "en.sent.score":
+				finalResObj, _= Build_en_sent_score_rsp(c, ssResObj);
+				/*
 			finalResObj["sentence"] = c.request["refText"].(string)
 			finalResObj["scoreProStress"] = ssResObj["rhythm"].(map[string]interface{})["stress"].(float64)
 			finalResObj["scoreProFluency"] = ssResObj["fluency"].(map[string]interface{})["overall"].(float64)
@@ -139,6 +140,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 			}
 			finalResObj["missingWordIndex"] = missingWordIndex
 			finalResObj["badWordIndex"] = badWordIndex
+				*/
 		case "en.pred.score":
 			finalResObj["sentence"] = c.request["refText"].(string)
 			finalResObj["scoreProNoAccent"] = ssResObj["pron"].(float64)
@@ -235,7 +237,6 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 				sugar.Infow("print var", "client", c.id, "sum", sum, "count", count, "weight", weightConfig)
 				overall := sum / (float64)(count)
 
-
 				if requestType == "ifun.italk.dub" {
 					overall = filteriTalkScore(c, overall)
 					if "-1" == requestOrderStr {
@@ -246,7 +247,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 				}
 				finalResObj["overall"] = overall
 			} else {
-				sugar.Infow("no score config found with requestType", "client",  c.id , "requestType", requestType)
+				sugar.Infow("no score config found with requestType", "client", c.id, "requestType", requestType)
 				overall := 0.0
 				count := 0
 				for key, val := range finalResObj {
@@ -265,7 +266,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		}
 
 		for key, val := range finalResObj {
-			if key == "badWordIndex" || key == "sentence" || key == "missingWordIndex" {
+			if key == "badWordIndex" || key == "sentence" || key == "missingWordIndex" || key == "sentAnalysis" {
 				finalResObjWithStrVal[key] = finalResObj[key]
 			} else {
 				finalResObjWithStrVal[key] = strconv.FormatFloat(val.(float64), 'f', -1, 64)
@@ -327,8 +328,8 @@ func startEngine(c *Client) {
 		if c.currCoreType == "en.sent.score" {
 			c.request["outputPhones"] = 1
 			c.request["phdet"] = 1
-			c.request["syllable"] = 1
-			c.request["syldet"] = 1
+			//c.request["syllable"] = 1
+			//c.request["syldet"] = 1
 		}
 		startObj["request"] = c.request
 	}

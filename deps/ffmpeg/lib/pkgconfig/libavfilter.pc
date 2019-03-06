@@ -1,0 +1,14 @@
+prefix=/home/fatcat/gotest/goav/third_party/FFmpeg/output
+exec_prefix=${prefix}
+libdir=/home/fatcat/gotest/goav/third_party/FFmpeg/output/lib
+includedir=/home/fatcat/gotest/goav/third_party/FFmpeg/output/include
+
+Name: libavfilter
+Description: FFmpeg audio/video filtering library
+Version: 7.48.100
+Requires: 
+Requires.private: libswscale >= 5.4.100, libavformat >= 58.26.101, libavcodec >= 58.47.102, libswresample >= 3.4.100, libavutil >= 56.26.100
+Conflicts:
+Libs: -L${libdir}  -lavfilter 
+Libs.private: -pthread -lm -lva
+Cflags: -I${includedir}

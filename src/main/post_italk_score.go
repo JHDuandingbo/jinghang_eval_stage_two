@@ -79,21 +79,21 @@ func filteriTalkScore(c *Client, score float64) float64 {
 		return score
 	}
 
-///BUG!!!!!!!!!!!!!!!!!!!!!
-	maxStage:=300.0
-	nscore := score * (1.0 - 1.2 * stage/maxStage)
-	if nscore > 0{
+	///BUG!!!!!!!!!!!!!!!!!!!!!
+	maxStage := 300.0
+	nscore := score * (1.0 - 1.2*stage/maxStage)
+	if nscore > 0 {
 		score = nscore
 	}
 	//italk_max_stage := float64(80)
-		sugar.Infow("filteriTalkScore", "client", c.id, "italk_max_stage", italk_max_stage)
-	if stage >=  float64(italk_max_stage) {
-        deadStage := float64(rand.Intn(6)) +italk_max_stage
+	sugar.Infow("filteriTalkScore", "client", c.id, "italk_max_stage", italk_max_stage)
+	if stage >= float64(italk_max_stage) {
+		deadStage := float64(rand.Intn(6)) + italk_max_stage
 		if stage >= float64(deadStage) {
-			score =   rand.Float64() * 2.5
+			score = rand.Float64() * 2.5
 		}
 	}
-		return score
+	return score
 
 }
 func postITalkScore(c *Client, score float64) {

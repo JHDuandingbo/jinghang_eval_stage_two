@@ -1,8 +1,10 @@
 #!/bin/bash
 export GOPATH="$(pwd)"
-#go get -u github.com/tencentyun/cos-go-sdk-v5/
-go get -v -u github.com/gorilla/websocket
-go get -v -u github.com/spf13/viper
+go get -u github.com/tencentyun/cos-go-sdk-v5/
+go get -v github.com/satori/go.uuid
+#go get -v -u github.com/gorilla/websocket
+#go get -v -u github.com/spf13/viper
+#go get -v -u  github.com/satori/go.uuid
 
 
 

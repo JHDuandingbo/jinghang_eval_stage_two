@@ -1,0 +1,14 @@
+prefix=/home/fatcat/gotest/goav/third_party/FFmpeg/output
+exec_prefix=${prefix}
+libdir=/home/fatcat/gotest/goav/third_party/FFmpeg/output/lib
+includedir=/home/fatcat/gotest/goav/third_party/FFmpeg/output/include
+
+Name: libavcodec
+Description: FFmpeg codec library
+Version: 58.47.102
+Requires: 
+Requires.private: libswresample >= 3.4.100, libavutil >= 56.26.100
+Conflicts:
+Libs: -L${libdir}  -lavcodec 
+Libs.private: -pthread -lm -lz -lmp3lame -lm -lva
+Cflags: -I${includedir}

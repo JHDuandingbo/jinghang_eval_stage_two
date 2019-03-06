@@ -1,0 +1,48 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
+type PhoneScore struct{
+	Char    string `json:"char"`
+	Score  float64  `json:"score"`
+	Phid   int  `json:"phid"`
+	Pherr	int  `json:"pherr"`
+}
+type SentScoreDetail struct {
+	Dp_type    int `json:"dp_type"`
+	Score int64  `json:"begin"`
+	Start   int64  `json:"end"`
+	End   int64  `json:"end"`
+	Dur  string `json:"dur"`
+	Phone  []PhoneScore `json:"phone"`
+}
+
+
+func main() {
+	//Read word dict for PART1
+	bytes, err := ioutil.ReadFile("./details.json") // just pass the file name
+	if err != nil {
+		fmt.Print(err)
+		return err
+	}
+	//var word_dict map[string]map[string]string
+	if err := json.Unmarshal(bytes, &G_config.word_dict); err != nil {
+		//panic(err) // do not use panic here
+		fmt.Print(err)
+		return err
+	}
+
+	return nil
+	//    fmt.Println(bytes) // print the content as 'bytes'
+
+	//str := string(bytes) // convert content to a 'string'
+	//var word_info = word_dict["relaxed"]
+	//fmt.Println(word_info["mp3_url"]) // print the content as a 'string'
+	//fmt.Println(word_info["phone"]) // print the content as a 'string'
+
+}
