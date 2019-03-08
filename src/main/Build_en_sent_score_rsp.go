@@ -25,7 +25,13 @@ func Build_en_sent_score_rsp(c *Client, ssResObj map[string]interface{}) (map[st
 		detail := detail_item.(map[string]interface{})
 		if detail["score"] != nil {
 			score := detail["score"].(float64)
-			if score <= 2.5 && score > 0 {
+			//dp_type := int(detail["dp_type"].(float64))
+			if nil != detail["dp_type"]{
+					dp_type := int(detail["dp_type"].(float64))
+					if 1== dp_type { //missing word
+						missingWordIndex = append(missingWordIndex, strconv.FormatInt(int64(i+1), 10))
+					}
+			}else if score <= 2.5 {
 				badWordIndex = append(badWordIndex, strconv.FormatInt(int64(i+1), 10))
 				char := strings.ToLower(detail["char"].(string))
 				word_info := G_config.Word_dict[char]
@@ -48,8 +54,6 @@ func Build_en_sent_score_rsp(c *Client, ssResObj map[string]interface{}) (map[st
 					sentAnalysisArr = append(sentAnalysisArr, sentAnalysis)
 				}
 
-			} else if score == 0 {
-				missingWordIndex = append(missingWordIndex, strconv.FormatInt(int64(i+1), 10))
 			}
 		}
 	}
