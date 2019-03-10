@@ -27,15 +27,12 @@ func Build_en_sent_score_rsp(c *Client, ssResObj map[string]interface{}) (map[st
 			score := detail["score"].(float64)
 				char := strings.ToLower(detail["char"].(string))
 			//dp_type := int(detail["dp_type"].(float64))
-/*
 			if nil != detail["dp_type"]{
 					dp_type := int(detail["dp_type"].(float64))
 					if 1== dp_type { //missing word
 						missingWordIndex = append(missingWordIndex, strconv.FormatInt(int64(i+1), 10))
 					}
-			}else 
-*/
-			if score <= 2.5  && len(char) > 2 {
+			}else if score <= 2  && len(char) > 5 {
 				badWordIndex = append(badWordIndex, strconv.FormatInt(int64(i+1), 10))
 				word_info := G_config.Word_dict[char]
 				if word_info != nil {
