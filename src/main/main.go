@@ -4,7 +4,6 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"net/http"
-	//"os"
 	"fmt"
 	"config"
 )
@@ -24,7 +23,7 @@ var (
 	_BUILD_TIME__ = ""
 
 	//runtime config
-	_PORT_          = 3001
+	_PORT_          = 3004
 	_ITALK_URL      = "http://140.143.238.102:5432/scoreITalk"
 	italk_max_stage float64
 )

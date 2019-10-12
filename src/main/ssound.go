@@ -211,10 +211,6 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 				finalResObj["scoreProNoAccent"] = finalResObj["semanticAccuracy"]
 				finalResObj["scoreProStress"] = finalResObj["semanticAccuracy"]
 				finalResObj["scoreProFluency"] = finalResObj["semanticAccuracy"]
-				//finalResObj["semanticAccuracy"] = finalResObj["semanticAccuracy"]
-				//finalResObj["relevancy"] = finalResObj["semanticAccuracy"]
-				//finalResObj["grammar"] = finalResObj["semanticAccuracy"]
-				//finalResObj["vocabulary"] = finalResObj["semanticAccuracy"]
 			case "en.word.score":
 				finalResObj["scoreProStress"] = finalResObj["scoreProNoAccent"]
 				finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]

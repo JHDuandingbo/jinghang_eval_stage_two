@@ -61,7 +61,7 @@ func Build_en_sent_score_rsp(c *Client, ssResObj map[string]interface{}) (map[st
 
 				}
 			*/
-			if score <= 2.5 {
+			if score <= 1 {
 				badWordIndex = append(badWordIndex, strconv.FormatInt(int64(i+1), 10))
 				word_info := G_config.Word_dict[char]
 				//fmt.Println("bad wordinfo:", word_info)
