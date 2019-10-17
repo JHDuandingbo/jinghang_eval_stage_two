@@ -216,7 +216,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 				finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
 			}
 		} else {
-			//	scoreConfig
+			//calculate overall score acording to requestKey, weights from 'score_config.go'
 			requestTypeArr := strings.Split(c.requestKey, ".")
 			requestOrderStr := requestTypeArr[len(requestTypeArr)-1]
 			requestType := strings.Join(requestTypeArr[:len(requestTypeArr)-1], ".")
@@ -262,7 +262,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		}
 
 		for key, val := range finalResObj {
-			if key == "badWordIndex" || key == "sentence" || key == "missingWordIndex" || key == "sentAnalysis" {
+			if key == "badWordIndex" || key == "sentence" || key == "goodWordIndex" || key == "missingWordIndex" || key == "sentAnalysis" || key == "audioUrl" {
 				finalResObjWithStrVal[key] = finalResObj[key]
 			} else {
 				finalResObjWithStrVal[key] = strconv.FormatFloat(val.(float64), 'f', -1, 64)
@@ -296,7 +296,6 @@ func startEngine(c *Client) {
 		panic(err) // do not use panic here
 	}
 	///should all change the coreType according to requestKey
-
 	if "en.sim.score" == c.currCoreType {
 		ssReqObj := make(map[string]interface{})
 		for k, v := range c.request {
@@ -306,7 +305,12 @@ func startEngine(c *Client) {
 		pointsArr := []interface{}{}
 		for _, val := range c.request["implications"].([]interface{}) {
 			valObj := make(map[string]interface{})
-			valObj["text"] = val.(string)
+			
+			//temp!!!!!!!!!!!
+			clearZootopia := val.(string)
+			clearZootopia  = strings.Replace(clearZootopia, "Zootopia", "",-1)
+			//valObj["text"] = val.(string)
+			valObj["text"] = clearZootopia
 			imArr = append(imArr, valObj)
 		}
 		for _, val := range c.request["keywords"].([]interface{}) {

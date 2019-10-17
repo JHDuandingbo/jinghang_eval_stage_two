@@ -613,6 +613,10 @@ func Convert_pcm_to_mp3(pcm_path string, mp3_path string) {
 //start : millisec
 //end : millisec
 func Pcm_to_mp3(pcm_path  string, start int, end int) (string,error) {
+
+	if _, err := os.Stat(pcm_path); os.IsNotExist(err) {
+		return "",nil
+	}
 	log.Printf("start:%d, end:%d\n",start, end)
 	sample_rate := 16000
 	sample_size := 2 //byte

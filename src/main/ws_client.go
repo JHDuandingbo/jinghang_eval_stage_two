@@ -93,11 +93,7 @@ func handleMessage(c *Client, msgType int, message []byte) {
 		switch msg["action"].(string) {
 		case "start":
 			sugar.Infow("EVAL START", "client", c.id, "data", msg)
-			//t := time.Now()
 			c.startTimePerRequest = time.Now()
-			//c.baseFileName = c.id + "." + t.Format(time.RFC3339Nano)
-			//c.startTimePerRequest = t.Format(time.RFC3339Nano)
-			//c.startTimePerRequest = t.Format(time.RFC3339Nano)
 			Save2File(c, ".json", message)
 			if "started" == c.engineState {
 				sugar.Infow("cancelEngine, current state is STARTED", "client", c.id)
@@ -126,22 +122,21 @@ func handleMessage(c *Client, msgType int, message []byte) {
 			c.prevCoreType = c.currCoreType
 			c.currCoreType = coreType.(string)
 			switch c.currCoreType {
-			case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score", "en.pred.score":
-				if c.prevCoreType != "" && c.prevCoreType != c.currCoreType {
-					sugar.Infow("try deleteEngine, currCoreType is different from prevCoreType ", "client", c.id)
-					deleteEngine(c)
-					initEngine(c)
-				}
-				startEngine(c)
-			default:
-				sugar.Warnw("Unknown coreType in request", "client", c.id, "data", string(message))
+					case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score", "en.pred.score":
+						if c.prevCoreType != "" && c.prevCoreType != c.currCoreType {
+							sugar.Infow("try deleteEngine, currCoreType is different from prevCoreType ", "client", c.id)
+							deleteEngine(c)
+							initEngine(c)
+						}
+						startEngine(c)
+					default:
+						sugar.Warnw("WARNING:UNKNOWN coreType in request", "client", c.id, "data", string(message))
 			}
 		case "stop":
 			sugar.Infow("EVAL STOP", "client", c.id, "data", msg)
 			switch c.currCoreType {
-			case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
-				//sugar.Infow("stopEngine", "client", c.id)
-				stopEngine(c)
+					case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
+						stopEngine(c)
 			}
 		case "cancel":
 			sugar.Infow("EVAL CANCEL", "client", c.id, "data", msg)
