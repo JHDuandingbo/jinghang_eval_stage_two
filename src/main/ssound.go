@@ -12,7 +12,7 @@ package main
 
 //extern void ssoundCallback(int  userData,const  char * message, int len);
 
-static inline int my_cb(const void *port, const char *id, int type,const void *message, int size){
+static inline int myCB(const void *port, const char *id, int type,const void *message, int size){
 	if (type == SSOUND_MESSAGE_TYPE_JSON){
 		//fprintf(stderr, "RSP:%s\n", (const char *)message);
 		ssoundCallback(port, (const char *)message, size);
@@ -21,19 +21,22 @@ static inline int my_cb(const void *port, const char *id, int type,const void *m
 
 
 }
-static inline int _ssound_start(struct ssound * engine, const char * start_tpl_str, int port){
+static inline int ssoundStart(struct ssound * engine, const char * start_tpl_str, int port){
 	char id[64];
-	//fprintf(stderr, "\n\nstart str:%s\n", start_tpl_str);
-	int ret = ssound_start(engine, start_tpl_str, id, my_cb, (void *)port);
+	int ret = ssound_start(engine, start_tpl_str, id, myCB, (void *)(port));
 	return ret;
 
+}
+static inline int ssoundStop(struct ssound * engine){
+	int ret = ssound_stop(engine);
+	return ret;
 }
 
 */
 import "C"
 import (
 	"encoding/json"
-	//"log"
+	"fmt"
 	"time"
 	"unsafe"
 	//"github.com/mattn/go-pointer"
@@ -89,7 +92,6 @@ func ssoundCallback(key C.int, cmsg *C.char, size C.int) {
 	}
 }
 func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
-
 	var scoreConfig map[string]interface{}
 	if err := json.Unmarshal([]byte(ScoreConfigStr), &scoreConfig); err != nil {
 		panic(err) // do not use panic here
@@ -119,49 +121,25 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		ssResObj := ssObj["result"].(map[string]interface{})
 		ssReqObj := ssObj["params"].(map[string]interface{})["request"].(map[string]interface{})
 		rspCoreType := ssReqObj["coreType"].(string)
-		//finalResObj["overall"] = "4.9";
 		switch rspCoreType {
 		case "en.sent.score":
-				finalResObj, _= Build_en_sent_score_rsp(c, ssResObj);
-				/*
+			finalResObj, _= BuildSentEvalRSP(c, ssResObj);
+		case "en.word.score":
+			finalResObj, _= BuildWordEvalRSP(c, ssResObj);
+			/*
 			finalResObj["sentence"] = c.request["refText"].(string)
-			finalResObj["scoreProStress"] = ssResObj["rhythm"].(map[string]interface{})["stress"].(float64)
-			finalResObj["scoreProFluency"] = ssResObj["fluency"].(map[string]interface{})["overall"].(float64)
 			finalResObj["scoreProNoAccent"] = ssResObj["pron"].(float64)
-
-			badWordIndex := []interface{}{}
-			missingWordIndex := []interface{}{}
-			details := ssResObj["details"].([]interface{})
-			for i, item := range details {
-				score := item.(map[string]interface{})["score"].(float64)
-				if score < 2 {
-					badWordIndex = append(badWordIndex, strconv.FormatInt(int64(i+1), 10))
-				}
-			}
-			finalResObj["missingWordIndex"] = missingWordIndex
-			finalResObj["badWordIndex"] = badWordIndex
-				*/
+			*/
 		case "en.pred.score":
 			finalResObj["sentence"] = c.request["refText"].(string)
 			finalResObj["scoreProNoAccent"] = ssResObj["pron"].(float64)
 			finalResObj["scoreProFluency"] = ssResObj["fluency"].(float64)
-			//finalResObj["scoreProStress"] = ssResObj["fluency"].(float64)
-		case "en.word.score":
-			finalResObj["sentence"] = c.request["refText"].(string)
-			finalResObj["scoreProNoAccent"] = ssResObj["pron"].(float64)
 		case "en.pqan.score", "en.retell.score", "en.pict.score":
-			//finalResObj["sentence"] =c.request["refText"].(string)
 			if rspCoreType == "en.retell.score" {
 				implicationArr := c.request["implications"].([]interface{})
 				implication := implicationArr[0].(string)
 				finalResObj["sentence"] = implication
 			}
-			//finalResObj["scoreProNoAccent"] = strconv.FormatFloat(overall, 'f', -1, 32)
-			//finalResObj["scoreProStress"] = strconv.FormatFloat(overall, 'f', -1, 32)
-			//finalResObj["scoreProFluency"] = strconv.FormatFloat(overall, 'f', -1, 32)
-			//finalResObj["scoreProNoAccent"] = overall
-			//finalResObj["scoreProStress"] = overall
-			//finalResObj["scoreProFluency"] = overall
 			overall := ssResObj["overall"].(float64)
 			finalResObj["semanticAccuracy"] = overall
 			finalResObj["grammar"] = overall
@@ -218,8 +196,15 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 		} else {
 			//calculate overall score acording to requestKey, weights from 'score_config.go'
 			requestTypeArr := strings.Split(c.requestKey, ".")
-			requestOrderStr := requestTypeArr[len(requestTypeArr)-1]
-			requestType := strings.Join(requestTypeArr[:len(requestTypeArr)-1], ".")
+			
+			requestType := ""
+			requestOrderStr := ""
+			if(len(requestTypeArr) > 1){
+					requestOrderStr = requestTypeArr[len(requestTypeArr)-1]
+					requestType = strings.Join(requestTypeArr[:len(requestTypeArr)-1], ".")
+			}else{
+					requestType = requestTypeArr[0]
+			}
 			if scoreConfig[requestType] != nil {
 				weightConfig := scoreConfig[requestType].(map[string]interface{})["weights"].(map[string]interface{})
 				sum := 0.0
@@ -336,14 +321,12 @@ func startEngine(c *Client) {
 
 	if "" != c.requestKey {
 		requestTypeArr := strings.Split(c.requestKey, ".")
-		requestType := strings.Join(requestTypeArr[1:len(requestTypeArr)-1], ".")
-		if requestType == "part5.paragraphReading" {
-			//ssReqObj := make(map[string]interface{})
-			//startObj["request"]["coreType"] = "en.pred.score"
-			startObj["request"].(map[string]interface{})["coreType"] = "en.pred.score"
-			//startObj["request"]["refText"] = "en.pred.score"
-			//ssReqObj["refText"] = c.request["refText"]
-			//startObj["request"] = ssReqObj
+		fmt.Println(requestTypeArr)
+		if(len(requestTypeArr) > 1){
+				requestType := strings.Join(requestTypeArr[1:len(requestTypeArr)-1], ".")
+				if requestType == "part5.paragraphReading" {
+					startObj["request"].(map[string]interface{})["coreType"] = "en.pred.score"
+				}
 		}
 	}
 
@@ -359,10 +342,10 @@ func startEngine(c *Client) {
 
 	//	initEngine(c)
 	sugar.Infow("ssound_start()", "client", c.id, "args", startObj)
-	startRes := C._ssound_start(c.engine, cStartStr, C.int(portN))
+	startRes := C.ssoundStart(c.engine, cStartStr, C.int(portN))
 	if 0 != startRes {
 		sugar.Warnw("ssound_start() failed", "client", c.id, "args", startStr)
-		//C.ssound_stop(c.engine)
+		//C.ssoundStop(c.engine)
 		//c.engineState = "stopped"
 		stopEngine(c)
 	}
@@ -404,11 +387,10 @@ func feedEngine(c *Client, data []byte) {
 	}
 }
 
-//func stopEngine(eng *C.struct_ssound){
 func stopEngine(c *Client) {
-	stopRes := C.ssound_stop(c.engine)
+	stopRes := C.ssoundStop(c.engine)
 	if stopRes != 0 {
-		sugar.Warnw("ssound_stop() failed", "client", c.id)
+		sugar.Warnw("ssoundStop() failed", "client", c.id)
 	} else {
 		c.engineState = "stopped"
 	}

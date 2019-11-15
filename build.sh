@@ -11,10 +11,10 @@ then
     _type=$1
 fi
 
-#CGO_LDFLAGS="-Wl,-rpath=./lib "  go build -a  -v  -ldflags "-X main._VERSION_=$_version -X main._TYPE_=$_type  -X main._BUILD_TIME_=$_build_time " src/main   -o speech_eval
+echo go build   -v  -ldflags "-X main._VERSION_=$_version -X main._TYPE_=$_type  -X main._BUILD_TIME_=$_build_time " ./src/main   
 go build   -v  -ldflags "-X main._VERSION_=$_version -X main._TYPE_=$_type  -X main._BUILD_TIME_=$_build_time " ./src/main   
 
-cp -r  ./main    ./bin/speech_eval
+cp   ./main    ./bin/speech_eval
 
-echo $GOPATH
+#echo $GOPATH
 

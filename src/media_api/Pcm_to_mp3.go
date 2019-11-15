@@ -627,7 +627,8 @@ func Pcm_to_mp3(pcm_path  string, start int, end int) (string,error) {
 		to = len(bytes)
 	}
 
-	dslice := bytes[from : to]
+log.Println("slice from:%d, to:%d, bytes len:%d",from , to ,len(bytes))
+	dslice := bytes[from : to];
 
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "prefix-")
 	if err != nil {
@@ -642,8 +643,8 @@ func Pcm_to_mp3(pcm_path  string, start int, end int) (string,error) {
 
 	// Close the file
 	if err := tmpFile.Close(); err != nil {
-		log.Println("fail to close tmp file", err)
-		return "", err
+		log.Println("fail to close tmp file", err);
+		return "", err;
 	}
 
 	log.Println("pcm clip:", tmpFile.Name())
@@ -666,6 +667,5 @@ func Pcm_to_mp3(pcm_path  string, start int, end int) (string,error) {
 	mp3_url, err := qcloud_api.Upload(mp3_path,  qcloud_path);
 	os.Remove(tmpFile.Name())
 	return mp3_url,nil
-	// Remember to clean up the file afterwards
 }
 
