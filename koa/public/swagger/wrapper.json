@@ -1,0 +1,81 @@
+{
+	"swagger": "2.0",
+		"info": {
+			"version": "1.0.0",
+			"title": "鲸航机经题目服务, 内网服务:172.21.0.36",
+			"termsOfService": "http://swagger.io/terms/",
+			"description": "20190923更新说明:\n		1、数据库更新，目前全库题目数量4200；\n2、字段名更新: 输入输出的category换成questionCategory, theme换成questionTheme, updatedTime换为updatedAt,数据类型不变;\n 20190924更新说明:\n1.增加模考出题接口"
+		},
+
+
+		"schemes": ["http"],
+		"paths": {
+			"/ielts_practice/questionsByCategory": {
+				"$ref":"./json/questions.json#questionsByCategory"
+			},
+
+			"/ielts_practice/questionsByTheme": {
+				"$ref":"./json/questions.json#questionsByTheme"
+			},
+
+			"/ielts_practice/questionsByObjectIds": {
+				"$ref":"./json/questions.json#questionsByObjectIds"
+			},
+			"/ielts_practice/questionsById": {
+				"$ref":"./json/questions.json#questionsById"
+			},
+			"/ielts_practice/newQuestionIds": {
+				"$ref":"./json/questions.json#newQuestionIds"
+			},
+			"/ielts_practice/newQuestionStats": {
+				"$ref":"./json/questions.json#newQuestionStats"
+			},
+
+			"/ielts_practice/questions": {
+				"$ref":"./json/questions.json#questions"
+			},
+			"/ielts_practice/userThemes": {
+				"$ref":"./json/questions.json#userThemes"
+			},
+
+			"/ielts_practice/questions/search": {
+				"$ref":"./json/questions.json#search"
+
+			},
+
+			"/ielts_practice/themeByQIds": {
+				"$ref":"./json/themes.json#themeByQIds"
+			},
+			"/ielts_practice/themes": {
+				"$ref":"./json/themes.json#themes"
+			},
+
+			"/ielts_practice/web/questions": {
+				"$ref":"./json/webapis.json#questions"
+			},
+			"/ielts_practice/web/themes": {
+				"$ref":"./json/webapis.json#themes"
+			},
+
+			"/ielts_practice/web/updateTheme": {
+				"$ref":"./json/webapis.json#updateTheme"
+			},
+			"/ielts_practice/web/updateQuestion": {
+				"$ref":"./json/webapis.json#updateQuestion"
+			},
+			"/ielts_practice/exams/newExam": {
+				"$ref":"./json/exams.json"
+			},
+			"/ielts_practice/words/": {
+				"$ref":"./json/words.json#words"
+			}
+
+
+
+
+		},
+		"definitions":{
+
+
+		}
+}

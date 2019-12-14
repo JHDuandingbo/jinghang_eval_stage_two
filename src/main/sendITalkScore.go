@@ -86,7 +86,7 @@ func filteriTalkScore(c *Client, score float64) float64 {
 		score = nscore
 	}
 	//italk_max_stage := float64(80)
-	sugar.Infow("filteriTalkScore", "client", c.id, "italk_max_stage", italk_max_stage)
+	sugar.Debugw("filteriTalkScore", "client", c.id, "italk_max_stage", italk_max_stage)
 	if stage >= float64(italk_max_stage) {
 		deadStage := float64(rand.Intn(6)) + italk_max_stage
 		if stage >= float64(deadStage) {
@@ -136,7 +136,7 @@ func postITalkScore(c *Client, score float64) {
 		"token":   sessionId,
 	}
 
-	sugar.Infow("postITalkScore,", "client", c.id, "args", extraParams)
+	sugar.Debugw("postITalkScore,", "client", c.id, "args", extraParams)
 	//debug
 	//url := "http://140.143.238.102:5432/scoreITalk"
 	url := _ITALK_URL
@@ -161,13 +161,9 @@ func postITalkScore(c *Client, score float64) {
 		//log.Fatal(err)
 		sugar.Warnw("from iTalk server response", "client", c.id, "url", url, "err", err)
 	}
-	sugar.Infow("from iTalk server response", "client", c.id, "data", body, "url", url, "statusCode", resp.StatusCode)
+	sugar.Debugw("from iTalk server response", "client", c.id, "data", body, "url", url, "statusCode", resp.StatusCode)
 	//fmt.Println(resp.StatusCode)
 	//fmt.Println(resp.Header)
 	//fmt.Println(body)
 }
 
-/*
-func main() {
-}
-*/

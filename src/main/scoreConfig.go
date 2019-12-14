@@ -372,7 +372,6 @@ var ScoreConfigStr = `
 
 }
 `
-
 /*
 func main(){
 	var   obj map[string]interface{}

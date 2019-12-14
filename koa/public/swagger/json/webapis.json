@@ -1,0 +1,400 @@
+{
+	"questions": {
+		"post": {
+			"tags": ["web端接口"],
+
+			"summary": "机经题目检索",
+			"consumes": [
+				"application/x-www-form-urlencoded"
+			],
+			"produces": [
+				"application/json"
+			],
+			"parameters": [
+			{
+				"name": "partNumber",
+				"enum":["0", "1", "2","3", "4","5"],
+				"in": "formData",
+				"description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3, 5: part1 and part2",
+				"required": false,
+				"type": "string"
+			},
+
+			{
+				"name": "purpose",
+				"enum":[0,1,2,3],
+				"in": "formData",
+				"description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+				"required": false,
+				"type": "integer"
+			},
+			{
+				"name": "questionTheme",
+				"in": "formData",
+				"description": "搜索主题关键词,支持regex",
+				"required": false,
+				"type": "string"
+			},
+			{
+				"name": "examTime",
+				"in": "formData",
+				"description": "考试时间",
+				"required": false,
+				"type": "string"
+			},
+			{
+				"name": "themeId",
+				"in": "formData",
+				"description": "",
+				"required": false,
+				"type": "string"
+			},
+
+			{
+				"name": "questionText",
+				"in": "formData",
+				"description": "搜索题目关键词,支持regex",
+				"required": false,
+				"type": "string"
+			},
+
+			{
+				"name": "modified",
+				"enum":[0, 1],
+				"in": "formData",
+				"description": "0:未修改，1：已修改",
+				"required": false,
+				"type": "integer"
+			},
+			{
+				"name": "active",
+				"enum":[0, 1],
+				"in": "formData",
+				"description": "0:停用，1：未停用",
+				"required": false,
+				"type": "integer"
+			},
+			{
+				"name": "questionType",
+				"enum":["0", "1", "2"],
+				"in": "formData",
+				"description": "0:all, 1:当季, 2:往季",
+				"required": false,
+				"type": "string"
+			},
+			{
+				"name": "isNew",
+				"enum":[0, 1],
+				"in": "formData",
+				"description": "0:非新，1：新题",
+				"required": false,
+				"type": "integer"
+			},
+
+			{
+				"name": "page",
+				"in": "formData",
+				"description": "",
+				"required": false,
+				"type": "integer"
+			},{
+				"name": "pageSize",
+				"in": "formData",
+				"description": "",
+				"required": false,
+				"type": "integer"
+			}
+
+
+			],
+			"responses": {
+				"200": {
+					"description": "successful operation"
+				},
+				"400": {
+					"description": "Invalid parameter supplied"
+				}
+			}
+		}
+	},
+		"themes": {
+			"post": {
+				"tags": ["web端接口"],
+
+				"summary": "主题信息",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				{
+					"name": "partNumber",
+					"enum":["0", "1", "2","3", "4","5"],
+					"in": "formData",
+					"description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "questionText",
+					"in": "formData",
+					"description": "",
+					"required": false,
+					"type": "string"
+				},
+
+				{
+					"name": "questionTheme",
+					"in": "formData",
+					"description": "",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "examTime",
+					"in": "formData",
+					"description": "考试时间",
+
+					"schema":{
+						"example":"2019年9-12月"
+					},
+					"required": false,
+					"type": "string"
+				},
+
+				{
+					"name": "questionCategory",
+					"in": "formData",
+					"description": "主题类型",
+					"enum":["PERSON","EVENT","OBJECT","PLACE"],
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "active",
+					"enum":[0, 1],
+					"description": "0:停用，1：未停用",
+					"in": "formData",
+					"required": false,
+					"type": "integer"
+				},
+
+				{
+					"name": "isNew",
+					"enum":[0, 1],
+					"description": "0:非新题，1：新题",
+					"in": "formData",
+					"required": false,
+					"type": "integer"
+				},
+				{
+					"name": "modified",
+					"enum":[0, 1],
+					"in": "formData",
+					"description": "0:未修改，1：已修改",
+					"required": false,
+					"type": "integer"
+				},
+				{
+					"name": "themeId",
+					"in": "formData",
+					"description": "",
+					"required": false,
+					"type": "string"
+				},
+
+
+				{
+					"name": "page",
+					"in": "formData",
+					"description": "",
+					"required": false,
+					"type": "integer"
+				},{
+					"name": "pageSize",
+					"in": "formData",
+					"description": "",
+					"required": false,
+					"type": "integer"
+				}
+
+
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		},
+		"updateTheme": {
+			"post": {
+				"tags": ["web端接口"],
+
+				"summary": "更新主题信息",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				{
+					"name": "questionTheme",
+					"in": "formData",
+					"description": "",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "examTime",
+					"in": "formData",
+					"description": "考试时间",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "questionCategory",
+					"in": "formData",
+					"description": "主题类型",
+					"enum":["PERSON","EVENT","OBJECT","PLACE"],
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "active",
+					"enum":[0, 1],
+					"description": "0:停用，1：未停用",
+					"in": "formData",
+					"required": false,
+					"type": "integer"
+				},
+				{
+					"name": "isNew",
+					"enum":[0, 1],
+					"description": "0:非新题，1：新题",
+					"in": "formData",
+					"required": false,
+					"type": "integer"
+				},
+
+				{
+					"name": "themeId",
+					"in": "formData",
+					"schema":{
+						"example":"5d80974e1edd723fa23902d9"
+					},
+					"description": "",
+					"required": true,
+					"type": "string"
+				}
+
+
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		},
+		"updateQuestion": {
+			"post": {
+				"tags": ["web端接口"],
+
+				"summary": "更新题目信息",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				{
+					"name": "questionText",
+					"in": "formData",
+					"description": "问题题目",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "promptInfo",
+					"in": "formData",
+					"description": "提示文本",
+					"required": false,
+					"type": "string"
+				},
+
+				{
+					"name": "referenceAnswerText",
+					"in": "formData",
+					"description": "参考答案文本",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "answerVideoUrl",
+					"in": "formData",
+					"description": "推荐视频地址",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "answerVideoTitle",
+					"in": "formData",
+					"description": "推荐视频标题",
+					"required": false,
+					"type": "string"
+				},
+
+
+				{
+					"name": "active",
+					"enum":[0, 1],
+					"in": "formData",
+					"description": "0:停用，1：未停用",
+					"required": false,
+					"type": "integer"
+				},
+				{
+					"name": "isNew",
+					"enum":[0, 1],
+					"in": "formData",
+					"description": "0:非新题，1：新题",
+					"required": false,
+					"type": "integer"
+				},
+
+				{
+					"name": "questionId",
+					"in": "formData",
+					"schema":{
+						"example":"5d80974e1edd723fa23902d9"
+					},
+					"description": "",
+					"required": true,
+					"type": "string"
+				}
+
+
+
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		}
+}

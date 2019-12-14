@@ -1,0 +1,89 @@
+{
+	"themes": {
+		"post": {
+			"tags": ["机经题目服务"],
+
+			"summary": "机经主题检索",
+			"consumes": [
+				"application/x-www-form-urlencoded"
+			],
+			"produces": [
+				"application/json"
+			],
+			"parameters": [
+			{
+				"name": "purpose",
+				"enum":[0,1,2,3],
+				"in": "formData",
+				"description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+				"required": false,
+				"type": "integer"
+			},
+			{
+				"name": "questionTheme",
+				"in": "formData",
+				"description": "搜索关键词",
+				"required": false,
+				"type": "string"
+			},
+			{
+				"name": "page",
+				"in": "formData",
+				"description": "",
+				"required": false,
+				"type": "integer"
+			},{
+				"name": "pageSize",
+				"in": "formData",
+				"description": "",
+				"required": false,
+				"type": "integer"
+			}
+
+
+			],
+			"responses": {
+				"200": {
+					"description": "successful operation"
+				},
+				"400": {
+					"description": "Invalid parameter supplied"
+				}
+			}
+		}
+	},
+	"themeByQIds": {
+			"post": {
+				"tags": ["机经题目服务"],
+
+				"summary": "根据题目id获取主题信息",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				{
+					"name": "ids",
+					"in": "formData",
+					"description": "用逗号分隔的id串",
+					"schema":{
+						"example":"1,2,3"
+					},
+					"required": false,
+					"type": "string"
+				}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		}
+
+}

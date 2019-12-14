@@ -45,28 +45,28 @@ import (
 )
 
 var initTemplate = `{   
-				"logLevel":1,
-                              "appKey":"a235", 
-                              "secretKey":"c11163aa6c834a028da4a4b30955bd15", 
-                              "cloud":{ 
-				      "server":"wss://api.cloud.ssapi.cn", 
-				      "connectTimeout":20, 
-				      "serverTimeout":10
-                              }
-	      }`
+	"logLevel":1,
+	"appKey":"a235", 
+	"secretKey":"c11163aa6c834a028da4a4b30955bd15", 
+	"cloud":{ 
+		"server":"wss://api.cloud.ssapi.cn", 
+		"connectTimeout":20, 
+		"serverTimeout":10
+	}
+}`
 var startTemplate = `
 {
 	"coreProvideType":"cloud", 
 	"app":{ 
 		"userId":"guest" 
 	}, 
-        "audio":{ 
+	"audio":{ 
 		"audioType":"wav", 
 		"sampleRate":16000, 
 		"channel":1, 
 		"sampleBytes":2 
-        }, 
-        "request":{ 
+	}, 
+	"request":{ 
 		"coreType":"en.sent.score", 
 		"refText":"Well it must be a great experience for you and i think it can deepen your understanding about americon culture", 
 		"attachAudioUrl":1,
@@ -81,10 +81,10 @@ func ssoundCallback(key C.int, cmsg *C.char, size C.int) {
 
 	var c *Client = nil
 	portStr := strconv.FormatInt(int64(key), 10)
-	//sugar.Infow("ssoundCallback() called, got ssound response", "client", nil, "args", msg)
+	//sugar.Debugw("ssoundCallback() called, got ssound response", "client", nil, "args", msg)
 	if tmp, ok := gMap.Get(portStr); ok {
 		c = tmp.(*Client)
-		sugar.Infow("retrieve client object from callback arg", "client", c.id, "args", portStr)
+		sugar.Debugw("retrieve client object from callback arg", "client", c.id, "args", portStr)
 		finalBytes := buildRSP(c, []byte(msg))
 		c.ssRspC <- finalBytes
 	} else {
@@ -101,7 +101,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 	if err := json.Unmarshal([]byte(ssData), &ssObj); err != nil {
 		panic(err) // do not use panic here
 	}
-	sugar.Infow("ssoundCallback() called, got ssound response", "client", nil, "args", ssObj)
+	sugar.Debugw("ssoundCallback() called, got ssound response", "client", nil, "args", ssObj)
 	err := ssObj["error"]
 	finalObj := make(map[string]interface{})
 	finalObj["errMsg"] = nil
@@ -180,7 +180,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 			finalResObj["liaison"] = 0.0
 		}
 
-		sugar.Infow("print var", "client", c.id, "requestKey", c.requestKey)
+		sugar.Debugw("print var", "client", c.id, "requestKey", c.requestKey)
 		if c.requestKey == "" {
 			//for old version apks, they only took scoreProNoAccent for marking stars
 
@@ -194,16 +194,22 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 				finalResObj["scoreProFluency"] = finalResObj["scoreProNoAccent"]
 			}
 		} else {
+			//send UserReqest to LogServer
+			var r  UserRequest
+			r.SessionId = c.sessionId
+			r.RequestKey = c.requestKey
+			//go sendLog(r)
+			userSession := parseSession(r.SessionId)
+			sugar.Infow("Got request", "session",userSession, "requestKey", r.RequestKey, "remoteAddr", c.id )
 			//calculate overall score acording to requestKey, weights from 'score_config.go'
 			requestTypeArr := strings.Split(c.requestKey, ".")
-			
 			requestType := ""
 			requestOrderStr := ""
 			if(len(requestTypeArr) > 1){
-					requestOrderStr = requestTypeArr[len(requestTypeArr)-1]
-					requestType = strings.Join(requestTypeArr[:len(requestTypeArr)-1], ".")
+				requestOrderStr = requestTypeArr[len(requestTypeArr)-1]
+				requestType = strings.Join(requestTypeArr[:len(requestTypeArr)-1], ".")
 			}else{
-					requestType = requestTypeArr[0]
+				requestType = requestTypeArr[0]
 			}
 			if scoreConfig[requestType] != nil {
 				weightConfig := scoreConfig[requestType].(map[string]interface{})["weights"].(map[string]interface{})
@@ -215,7 +221,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 						count++
 					}
 				}
-				sugar.Infow("print var", "client", c.id, "sum", sum, "count", count, "weight", weightConfig)
+				sugar.Debugw("print var", "client", c.id, "sum", sum, "count", count, "weight", weightConfig)
 				overall := sum / (float64)(count)
 
 				if requestType == "ifun.italk.dub" {
@@ -228,7 +234,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 				}
 				finalResObj["overall"] = overall
 			} else {
-				sugar.Infow("no score config found with requestType", "client", c.id, "requestType", requestType)
+				sugar.Debugw("no score config found with requestType", "client", c.id, "requestType", requestType)
 				overall := 0.0
 				count := 0
 				for key, val := range finalResObj {
@@ -256,7 +262,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 
 	}
 
-	sugar.Infow("EVAL RSP", "client", c.id, "data", finalObj)
+	sugar.Debugw("EVAL RSP", "client", c.id, "data", finalObj)
 	finalBytes, err = json.Marshal(finalObj)
 	if nil != err {
 		sugar.Warnw("fail to stringify json object", "client", c.id, "args", finalObj)
@@ -290,7 +296,7 @@ func startEngine(c *Client) {
 		pointsArr := []interface{}{}
 		for _, val := range c.request["implications"].([]interface{}) {
 			valObj := make(map[string]interface{})
-			
+
 			//temp!!!!!!!!!!!
 			clearZootopia := val.(string)
 			clearZootopia  = strings.Replace(clearZootopia, "Zootopia", "",-1)
@@ -323,10 +329,10 @@ func startEngine(c *Client) {
 		requestTypeArr := strings.Split(c.requestKey, ".")
 		fmt.Println(requestTypeArr)
 		if(len(requestTypeArr) > 1){
-				requestType := strings.Join(requestTypeArr[1:len(requestTypeArr)-1], ".")
-				if requestType == "part5.paragraphReading" {
-					startObj["request"].(map[string]interface{})["coreType"] = "en.pred.score"
-				}
+			requestType := strings.Join(requestTypeArr[1:len(requestTypeArr)-1], ".")
+			if requestType == "part5.paragraphReading" {
+				startObj["request"].(map[string]interface{})["coreType"] = "en.pred.score"
+			}
 		}
 	}
 
@@ -341,7 +347,7 @@ func startEngine(c *Client) {
 	}
 
 	//	initEngine(c)
-	sugar.Infow("ssound_start()", "client", c.id, "args", startObj)
+	sugar.Debugw("ssound_start()", "client", c.id, "args", startObj)
 	startRes := C.ssoundStart(c.engine, cStartStr, C.int(portN))
 	if 0 != startRes {
 		sugar.Warnw("ssound_start() failed", "client", c.id, "args", startStr)

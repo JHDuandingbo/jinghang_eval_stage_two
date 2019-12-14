@@ -1,0 +1,68 @@
+### 雅思机经题库服务说明
+1. 功能说明：
+    * 支撑web端模考、机经题目管理(主题和题目编辑)
+    * 支撑业务端模考出题、机经新题
+    * 支撑个性化服务
+
+2. 接口规范：见 `http://<server ip>:12111/swagger/`
+3. 技术栈: `Koajs(Nodejs)、MongoDB(3.2)`
+4. 启动命令：
+    ```
+    PORT=12111 DB_HOST="xxxxx"  DB_USER=xxxx DB_PASSWORD="xxxx" pm2 start bin/www  -n IELTSPracticeQuesionsService
+    pm2 save 
+    pm2 startup
+    ```
+
+5. comments:
+    * mongodb shema:
+        ```
+        //_id为内部使用
+        "_id": "5d7f95da081156ffffffffff",
+        //id 从10000开头的部分为新题，10000以内为历史机经和模考题目
+        "id": 1, 
+        "questionSource": "YSG",
+        //questionSource中 非"BW",非"JY"开头的部分，questionSerial为themeInfo.themeId的值
+        "questionSerial": 1001,
+        "questionPart": "part1",
+        "questionNumber": "1",
+        "chineseQuestionTheme": "",
+        "questionText": "Do you have a favorite teacher?",
+        "promptInfo": "",
+        "questionMaleAudioUrl": "",
+        "maleAudioDuration": "2",
+        "questionFemaleAudioUrl": "",
+        "femaleAudioDuration": "2",
+        "referenceAnswerText": "",
+        "referenceAnswerAudioText": "",
+        "referenceAnswerMaleAudioUrl": "",
+        "referenceAnswerFemaleAudioUrl": "",
+        "questionType": "GENERAL",
+        "frequency": "",
+        "answerVideoUrl": "",
+        "answerVideoTitle": "",
+        "answerVideoImageUrl": "",
+        "active": 1,
+        "themeInfo": {
+            "questionTheme": "Teachers",
+            "questionCategory": "PERSON",
+            "themeId": 1001,
+            "examTime": "2019年1-4月",
+            "isNew": 0,
+            "_id": "5d88aa3d06d56dffffffffff",
+            "active": 1,  //主题是否停用，主题停用，所有同主题题目停用
+            "modified": 0,
+            "updatedAt": ""
+        },
+        "modified": 0,
+        "updateAt": "",
+        "updatedAt": "",
+        "isExam": 0,
+        "isPractice": 1
+        }
+
+        ```
+    * 支持 gzip压缩：
+        ```
+        time curl  -H "Accept-Encoding:gzip" 58.87.99.66:12111/ielts_practice/test | gzip  -d > questions.json
+        ```
+ 

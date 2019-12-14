@@ -2,6 +2,7 @@
 #export GOPATH=$(realpath ../../)
 #export GOPATH="$(go env GOPATH):$(pwd)/vendor"
 export GOPATH="$(pwd)"
+GO="/usr/lib/go-1.10/bin/go"
 
 _version="0.1" 
 _build_time="$(date +%Y%m%d-%H:%M:%S)" 
@@ -12,9 +13,9 @@ then
 fi
 
 echo go build   -v  -ldflags "-X main._VERSION_=$_version -X main._TYPE_=$_type  -X main._BUILD_TIME_=$_build_time " ./src/main   
-go build   -v  -ldflags "-X main._VERSION_=$_version -X main._TYPE_=$_type  -X main._BUILD_TIME_=$_build_time " ./src/main   
+$GO build   -v  -ldflags "-X main._VERSION_=$_version -X main._TYPE_=$_type  -X main._BUILD_TIME_=$_build_time " ./src/main   
 
-cp   ./main    ./bin/speech_eval
+mv   ./main    ./bin/ssoundEval
 
 #echo $GOPATH
 

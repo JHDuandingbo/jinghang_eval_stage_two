@@ -92,11 +92,11 @@ func handleMessage(c *Client, msgType int, message []byte) {
 		}
 		switch msg["action"].(string) {
 		case "start":
-			sugar.Infow("EVAL START", "client", c.id, "data", msg)
+			sugar.Debugw("EVAL START", "client", c.id, "data", msg)
 			c.startTimePerRequest = time.Now()
 			Save2File(c, ".json", message)
 			if "started" == c.engineState {
-				sugar.Infow("cancelEngine, current state is STARTED", "client", c.id)
+				sugar.Debugw("cancelEngine, current state is STARTED", "client", c.id)
 				cancelEngine(c)
 			}
 			if msg["requestKey"] != nil {
@@ -122,24 +122,24 @@ func handleMessage(c *Client, msgType int, message []byte) {
 			c.prevCoreType = c.currCoreType
 			c.currCoreType = coreType.(string)
 			switch c.currCoreType {
-					case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score", "en.pred.score":
-						if c.prevCoreType != "" && c.prevCoreType != c.currCoreType {
-							sugar.Infow("try deleteEngine, currCoreType is different from prevCoreType ", "client", c.id)
-							deleteEngine(c)
-							initEngine(c)
-						}
-						startEngine(c)
-					default:
-						sugar.Warnw("WARNING:UNKNOWN coreType in request", "client", c.id, "data", string(message))
+			case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score", "en.pred.score":
+				if c.prevCoreType != "" && c.prevCoreType != c.currCoreType {
+					sugar.Debugw("try deleteEngine, currCoreType is different from prevCoreType ", "client", c.id)
+					deleteEngine(c)
+					initEngine(c)
+				}
+				startEngine(c)
+			default:
+				sugar.Warnw("WARNING:UNKNOWN coreType in request", "client", c.id, "data", string(message))
 			}
 		case "stop":
-			sugar.Infow("EVAL STOP", "client", c.id, "data", msg)
+			sugar.Debugw("EVAL STOP", "client", c.id, "data", msg)
 			switch c.currCoreType {
-					case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
-						stopEngine(c)
+			case "en.sent.score", "en.word.score", "en.pict.score", "en.pqan.score", "en.sim.score":
+				stopEngine(c)
 			}
 		case "cancel":
-			sugar.Infow("EVAL CANCEL", "client", c.id, "data", msg)
+			sugar.Debugw("EVAL CANCEL", "client", c.id, "data", msg)
 			cancelEngine(c)
 		default:
 			sugar.Warnw("Unknown eval action", "client", c.id, "data", string(message))
@@ -191,7 +191,7 @@ func (c *Client) writeMessage() {
 		select {
 		case message, ok := <-c.ssRspC:
 			c.engineState = "answered"
-			//sugar.Infow("Got FINAL RSP, return it to client", "client", c.id, "data", finalObj)
+			//sugar.Debugw("Got FINAL RSP, return it to client", "client", c.id, "data", finalObj)
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -225,7 +225,7 @@ func (c *Client) writeMessage() {
 			handleMessage(c, wsMsg.msgType, wsMsg.message)
 		case <-c.done:
 			//log.Printf("%s:disconnected, duration:%f seconds,current clients:%d\n", c.id, time.Since(c.connectTime).Seconds(), gMap.Count())
-			sugar.Infow("client disconnected", "client", c.id, "duration", time.Since(c.connectTime).Seconds(), "client_remain", gMap.Count())
+			sugar.Debugw("client disconnected", "client", c.id, "duration", time.Since(c.connectTime).Seconds(), "client_remain", gMap.Count())
 			//log.Printf("%s:ssound_delete engine:%p\n", c.id, c.engine)
 			deleteDecoder(c)
 			deleteEngine(c)
@@ -237,7 +237,7 @@ func (c *Client) writeMessage() {
 	}
 }
 
-func getIpPort(req *http.Request) (id string, port string) {
+func getUserAddress(req *http.Request) (id string, port string) {
 	ip, port, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
 		//return nil, log.Errorf("userip: %q is not IP:port", req.RemoteAddr)
@@ -253,7 +253,7 @@ func getIpPort(req *http.Request) (id string, port string) {
 		sugar.Warnw("net.ParseIP failed", "err", err, "args", ip)
 		return
 	}
-	sugar.Infow("new client cennected", "client", id)
+	sugar.Debugw("new client cennected", "client", id)
 	return
 }
 
@@ -265,7 +265,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		sugar.Warnw("websocket.Upgrader  Upgrade() failed ", "err", err, "args", nil)
 		return
 	}
-	id, port := getIpPort(r)
+	id, port := getUserAddress(r)
+	//remoteAddr := conn.RemoteAddr().(string)
+	sugar.Debugw("remote addr", "remoteAddr",r.RemoteAddr)
 	client := &Client{connectTime: time.Now(), conn: conn, id: id, port: port, valid: true, engineState: "deleted", ssRspC: make(chan []byte, 4096), ssReqC: make(chan WSMsg, 1), done: make(chan int, 1)}
 	initDecoder(client)
 	gMap.Set(port, client)

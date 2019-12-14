@@ -1,0 +1,966 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "鲸航机经题目服务, 内网服务:172.21.0.36",
+    "termsOfService": "http://swagger.io/terms/",
+    "description": "20190923更新说明:\n		1、数据库更新，目前全库题目数量4200；\n2、字段名更新: 输入输出的category换成questionCategory, theme换成questionTheme, updatedTime换为updatedAt,数据类型不变;\n 20190924更新说明:\n1.增加模考出题接口"
+  },
+  
+
+  "schemes": ["http"],
+  "paths": {
+	"/ielts_practice/questionsByCategory": {
+      "post": {
+        "tags": ["机经题目服务"],
+        "summary": "根据类别查找",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "purpose",
+	    "enum":[0,1,2,3],
+            "in": "formData",
+            "description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+            "required": false,
+            "type": "integer"
+          },
+	    {
+            "name": "partNumber",
+	    "enum":["0", "1", "2","3", "4"],
+            "in": "formData",
+            "description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "questionCategory",
+	    "enum":["0", "1", "2","3", "4"],
+            "in": "formData",
+            "description": "0:all, 1:PERSON, 2:EVENT, 3:OBJECT, 4:PLACE",
+            "required": false,
+            "type": "string"
+          }
+
+
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+
+ "/ielts_practice/questionsByTheme": {
+      "post": {
+        "tags": ["机经题目服务"],
+
+        "summary": "根据主题查找",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "purpose",
+	    "enum":[0,1,2,3],
+            "in": "formData",
+            "description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+            "required": false,
+            "type": "integer"
+          },
+	    {
+            "name": "partNumber",
+	    "enum":["0", "1", "2","3", "4"],
+            "in": "formData",
+            "description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "questionCategory",
+	    "enum":["0", "1", "2","3", "4"],
+            "in": "formData",
+            "description": "0:all, 1:PERSON, 2:EVENT, 3:OBJECT, 4:PLACE",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "questionTheme",
+            "in": "formData",
+            "description": "主题关键词",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+"/ielts_practice/themeByQIds": {
+      "post": {
+        "tags": ["机经题目服务"],
+
+        "summary": "根据题目id获取主题信息",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "ids",
+            "in": "formData",
+            "description": "用逗号分隔的id串",
+		"schema":{
+		    "example":"1,2,3"
+		},
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+
+"/ielts_practice/questionsByObjectIds": {
+      "post": {
+        "tags": ["机经题目服务"],
+
+        "summary": "根据ObjectIds串查询",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "objectIdInString",
+            "in": "formData",
+            "description": "用逗号分隔的ObjectId串",
+		"schema":{
+		    "example":"5d7f95dc08115617afc53e29,5d7f95dc08115617afc53ea2"
+		},
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+"/ielts_practice/questionsById": {
+      "post": {
+        "tags": ["机经题目服务"],
+
+        "summary": "根据id查找",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "purpose",
+	    "enum":[0,1,2,3],
+            "in": "formData",
+            "description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "id",
+            "in": "formData",
+            "description": "",
+            "required": true,
+            "type": "string"
+          }
+
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+"/ielts_practice/newQuestionIds": {
+      "get": {
+        "tags": ["机经题目服务"],
+
+        "summary": "获取所有新题id",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+"/ielts_practice/newQuestionStats": {
+      "get": {
+        "tags": ["机经题目服务"],
+
+        "summary": "获取当季新题统计信息",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+
+    "/ielts_practice/questions": {
+      "post": {
+        "tags": ["机经题目服务"],
+
+        "summary": "根据partNumber, questionType, questionCategory, questionTheme 查找",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "purpose",
+	    "enum":[0,1,2,3],
+            "in": "formData",
+            "description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "partNumber",
+	    "enum":["0", "1", "2","3", "4"],
+            "in": "formData",
+            "description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+            "required": false,
+            "type": "string"
+          },
+	  {
+            "name": "questionCategory",
+	    "enum":["0", "1", "2","3", "4"],
+            "in": "formData",
+            "description": "0:all, 1:PERSON, 2:EVENT, 3:OBJECT, 4:PLACE",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "questionType",
+	    "enum":["0", "1", "2"],
+            "in": "formData",
+            "description": "0:all, 1:当季, 2:往季",
+            "required": false,
+            "type": "string"
+          },
+
+	{
+            "name": "questionTheme",
+            "in": "formData",
+            "description": "主题关键词",
+            "required": false,
+            "type": "string"
+          }
+
+
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+"/ielts_practice/userThemes": {
+      "post": {
+        "tags": ["机经首页用户主题查询"],
+
+        "summary": "机经首页用户主题查询",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "purpose",
+	    "enum":[0,1,2,3],
+            "in": "formData",
+            "description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "partNumber",
+	    "enum":["0", "1", "2","3", "4"],
+            "in": "formData",
+            "description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+            "required": false,
+            "type": "string"
+          },
+	  {
+            "name": "questionCategory",
+	    "enum":["0", "1", "2","3", "4"],
+            "in": "formData",
+            "description": "0:all, 1:PERSON, 2:EVENT, 3:OBJECT, 4:PLACE",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "questionType",
+	    "enum":["0", "1", "2"],
+            "in": "formData",
+            "description": "0:all, 1:当季, 2:往季",
+            "required": false,
+            "type": "string"
+          },
+
+	{
+            "name": "lastTheme",
+            "in": "formData",
+            "description": "用户当前主题，新用户初始值 \"0\"",
+            "required": false,
+	    "default":"0",
+            "type": "string"
+          }
+
+
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+
+"/ielts_practice/questions/search": {
+      "post": {
+        "tags": ["机经题目服务"],
+
+        "summary": "机经题目检索",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "purpose",
+	    "enum":[0,1,2,3],
+            "in": "formData",
+            "description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "text",
+            "in": "formData",
+            "description": "搜索关键词",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "partNumber",
+	    "enum":["0", "1", "2","3", "4"],
+            "in": "formData",
+            "description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "questionCategory",
+	    "enum":["0", "1", "2","3", "4"],
+            "in": "formData",
+            "description": "0:all, 1:PERSON, 2:EVENT, 3:OBJECT, 4:PLACE",
+            "required": false,
+            "type": "string"
+          },
+
+	{
+            "name": "page",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "integer"
+          },{
+            "name": "pageSize",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "integer"
+          }
+
+
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+"/ielts_practice/themes": {
+      "post": {
+        "tags": ["机经题目服务"],
+
+        "summary": "机经主题检索",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "purpose",
+	    "enum":[0,1,2,3],
+            "in": "formData",
+            "description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "questionTheme",
+            "in": "formData",
+            "description": "搜索关键词",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "page",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "integer"
+          },{
+            "name": "pageSize",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "integer"
+          }
+
+
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+
+"/ielts_practice/web/questions": {
+      "post": {
+        "tags": ["web端接口"],
+
+        "summary": "机经题目检索",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "partNumber",
+	    "enum":["0", "1", "2","3", "4","5"],
+            "in": "formData",
+            "description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3, 5: part1 and part2",
+            "required": false,
+            "type": "string"
+          },
+
+	{
+            "name": "purpose",
+	    "enum":[0,1,2,3],
+            "in": "formData",
+            "description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "questionTheme",
+            "in": "formData",
+            "description": "搜索主题关键词,支持regex",
+            "required": false,
+            "type": "string"
+          },
+	  {
+            "name": "examTime",
+            "in": "formData",
+            "description": "考试时间",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "themeId",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "string"
+          },
+
+	{
+            "name": "questionText",
+            "in": "formData",
+            "description": "搜索题目关键词,支持regex",
+            "required": false,
+            "type": "string"
+          },
+
+	{
+            "name": "modified",
+	    "enum":[0, 1],
+            "in": "formData",
+            "description": "0:未修改，1：已修改",
+            "required": false,
+            "type": "integer"
+          },
+	{
+            "name": "active",
+	    "enum":[0, 1],
+            "in": "formData",
+            "description": "0:停用，1：未停用",
+            "required": false,
+            "type": "integer"
+          },
+	{
+            "name": "questionType",
+	    "enum":["0", "1", "2"],
+            "in": "formData",
+            "description": "0:all, 1:当季, 2:往季",
+            "required": false,
+            "type": "string"
+          },
+		{
+            "name": "isNew",
+	    "enum":[0, 1],
+            "in": "formData",
+            "description": "0:非新，1：新题",
+            "required": false,
+            "type": "integer"
+          },
+
+	{
+            "name": "page",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "integer"
+          },{
+            "name": "pageSize",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "integer"
+          }
+
+
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+"/ielts_practice/web/themes": {
+      "post": {
+        "tags": ["web端接口"],
+
+        "summary": "主题信息",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "partNumber",
+	    "enum":["0", "1", "2","3", "4","5"],
+            "in": "formData",
+            "description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "questionText",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "string"
+          },
+
+	{
+            "name": "questionTheme",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "string"
+          },
+{
+            "name": "examTime",
+            "in": "formData",
+            "description": "考试时间",
+
+	"schema":{
+	    "example":"2019年9-12月"
+	},
+            "required": false,
+            "type": "string"
+          },
+
+	{
+            "name": "questionCategory",
+            "in": "formData",
+            "description": "主题类型",
+	    "enum":["PERSON","EVENT","OBJECT","PLACE"],
+            "required": false,
+            "type": "string"
+          },
+     {
+            "name": "active",
+	    "enum":[0, 1],
+            "description": "0:停用，1：未停用",
+            "in": "formData",
+            "required": false,
+            "type": "integer"
+          },
+
+{
+            "name": "isNew",
+	    "enum":[0, 1],
+            "description": "0:非新题，1：新题",
+            "in": "formData",
+            "required": false,
+            "type": "integer"
+          },
+{
+            "name": "modified",
+	    "enum":[0, 1],
+            "in": "formData",
+            "description": "0:未修改，1：已修改",
+            "required": false,
+            "type": "integer"
+          },
+{
+            "name": "themeId",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "string"
+          },
+
+
+	{
+            "name": "page",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "integer"
+          },{
+            "name": "pageSize",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "integer"
+          }
+
+
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+
+"/ielts_practice/web/updateTheme": {
+      "post": {
+        "tags": ["web端接口"],
+
+        "summary": "更新主题信息",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "questionTheme",
+            "in": "formData",
+            "description": "",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "examTime",
+            "in": "formData",
+            "description": "考试时间",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "questionCategory",
+            "in": "formData",
+            "description": "主题类型",
+	    "enum":["PERSON","EVENT","OBJECT","PLACE"],
+            "required": false,
+            "type": "string"
+          },
+     {
+            "name": "active",
+	    "enum":[0, 1],
+            "description": "0:停用，1：未停用",
+            "in": "formData",
+            "required": false,
+            "type": "integer"
+          },
+{
+            "name": "isNew",
+	    "enum":[0, 1],
+            "description": "0:非新题，1：新题",
+            "in": "formData",
+            "required": false,
+            "type": "integer"
+          },
+
+	{
+            "name": "themeId",
+            "in": "formData",
+	"schema":{
+	    "example":"5d80974e1edd723fa23902d9"
+	},
+            "description": "",
+            "required": true,
+            "type": "string"
+          }
+
+
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+"/ielts_practice/web/updateQuestion": {
+      "post": {
+        "tags": ["web端接口"],
+
+        "summary": "更新题目信息",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "questionText",
+            "in": "formData",
+            "description": "问题题目",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "promptInfo",
+            "in": "formData",
+            "description": "提示文本",
+            "required": false,
+            "type": "string"
+          },
+
+	{
+            "name": "referenceAnswerText",
+            "in": "formData",
+            "description": "参考答案文本",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "answerVideoUrl",
+            "in": "formData",
+            "description": "推荐视频地址",
+            "required": false,
+            "type": "string"
+          },
+	{
+            "name": "answerVideoTitle",
+            "in": "formData",
+            "description": "推荐视频标题",
+            "required": false,
+            "type": "string"
+          },
+
+
+	{
+            "name": "active",
+	    "enum":[0, 1],
+            "in": "formData",
+            "description": "0:停用，1：未停用",
+            "required": false,
+            "type": "integer"
+          },
+{
+            "name": "isNew",
+	    "enum":[0, 1],
+            "in": "formData",
+            "description": "0:非新题，1：新题",
+            "required": false,
+            "type": "integer"
+          },
+
+	{
+            "name": "questionId",
+            "in": "formData",
+	"schema":{
+	    "example":"5d80974e1edd723fa23902d9"
+	},
+            "description": "",
+            "required": true,
+            "type": "string"
+          }
+
+
+
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    },
+	"/ielts_practice/exams/newExam": {
+      "post": {
+        "tags": ["模考出题接口"],
+
+        "summary": "模考出题",
+	 "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+	"produces": [
+          "application/json"
+        ],
+        "parameters": [
+	{
+            "name": "content",
+            "in": "formData",
+            "description": "请求参数序列化,参见<<鲸小爱雅思口语模考出题服务接口方案>>",
+            "required": false,
+		"schema":{
+		    "example":'{"examType":0,"audioChoice":1,"histories":[{"examId":"3001","examTime":"2019-06-12 12:35:15","questions":{"part01":"5d8040fcc17f034eec46aee3","part02":"5d8040fcc17f034eec46aeda,5d8040fcc17f034eec46aed3","part1":"5d8040fbc17f034eec46ae9c,5d8040fbc17f034eec46ae9d,5 d8040fbc17f034eec46ae9e,5d8040fbc17f034eec46ae9f","part2":"5d8040fbc17f034eec46aeb2","part3":"5d8040fbc17f034eec46aeb3,5d8040fbc17f034eec46aeb4,5 d8040fbc17f034eec46aeb5,5d8040fbc17f034eec46aeb6"}},{"examId":"3050","examTime":"2019-08-10 10:30:18","questions":{"part01":"5d8040fcc17f034eec46aee3","part02":"5d8040fcc17f034eec46aeda,5d8040fcc17f034eec46aed3","part1":"5d8040fbc17f034eec46ae9c,5d8040fbc17f034eec46ae9d,5 d8040fbc17f034eec46ae9e,5d8040fbc17f034eec46ae9f","part2":"5d8040fbc17f034eec46aeb2","part3":"5d8040fbc17f034eec46aeb3,5d8040fbc17f034eec46aeb4,5 d8040fbc17f034eec46aeb5,5d8040fbc17f034eec46aeb6"}}]}'
+		},
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "400": {
+            "description": "Invalid parameter supplied"
+          }
+        }
+      }
+    }
+
+
+
+
+  },
+  "definitions":{
+     
+
+  }
+}

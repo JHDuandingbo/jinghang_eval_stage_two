@@ -1,0 +1,33 @@
+{
+	"post": {
+		"tags": ["模考出题接口"],
+		"summary": "模考出题",
+		"consumes": [
+			"application/x-www-form-urlencoded"
+		],
+		"produces": [
+			"application/json"
+		],
+		"parameters": [
+		{
+			"name": "content",
+			"in": "formData",
+			"description": "请求参数序列化,参见<<鲸小爱雅思口语模考出题服务接口方案>>",
+			"required": false,
+			"schema":{
+				"example":'{"examType":0,"audioChoice":1,"histories":[{"examId":"3001","examTime":"2019-06-12 12:35:15","questions":{"part01":"5d8040fcc17f034eec46aee3","part02":"5d8040fcc17f034eec46aeda,5d8040fcc17f034eec46aed3","part1":"5d8040fbc17f034eec46ae9c,5d8040fbc17f034eec46ae9d,5 d8040fbc17f034eec46ae9e,5d8040fbc17f034eec46ae9f","part2":"5d8040fbc17f034eec46aeb2","part3":"5d8040fbc17f034eec46aeb3,5d8040fbc17f034eec46aeb4,5 d8040fbc17f034eec46aeb5,5d8040fbc17f034eec46aeb6"}},{"examId":"3050","examTime":"2019-08-10 10:30:18","questions":{"part01":"5d8040fcc17f034eec46aee3","part02":"5d8040fcc17f034eec46aeda,5d8040fcc17f034eec46aed3","part1":"5d8040fbc17f034eec46ae9c,5d8040fbc17f034eec46ae9d,5 d8040fbc17f034eec46ae9e,5d8040fbc17f034eec46ae9f","part2":"5d8040fbc17f034eec46aeb2","part3":"5d8040fbc17f034eec46aeb3,5d8040fbc17f034eec46aeb4,5 d8040fbc17f034eec46aeb5,5d8040fbc17f034eec46aeb6"}}]}'
+			},
+			"type": "string"
+		}
+		],
+		"responses": {
+			"200": {
+				"description": "successful operation"
+			},
+			"400": {
+				"description": "Invalid parameter supplied"
+			}
+		}
+	}
+}
+

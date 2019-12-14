@@ -1,0 +1,429 @@
+{
+	"questionsByCategory": {
+		"post": {
+			"tags": ["机经题目服务"],
+			"summary": "根据类别查找",
+			"consumes": [
+				"application/x-www-form-urlencoded"
+			],
+			"produces": [
+				"application/json"
+			],
+			"parameters": [
+			{
+				"name": "purpose",
+				"enum":[0,1,2,3],
+				"in": "formData",
+				"description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+				"required": false,
+				"type": "integer"
+			},
+			{
+				"name": "partNumber",
+				"enum":["0", "1", "2","3", "4"],
+				"in": "formData",
+				"description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+				"required": false,
+				"type": "string"
+			},
+			{
+				"name": "questionCategory",
+				"enum":["0", "1", "2","3", "4"],
+				"in": "formData",
+				"description": "0:all, 1:PERSON, 2:EVENT, 3:OBJECT, 4:PLACE",
+				"required": false,
+				"type": "string"
+			}
+
+
+			],
+			"responses": {
+				"200": {
+					"description": "successful operation"
+				},
+				"400": {
+					"description": "Invalid parameter supplied"
+				}
+			}
+		}
+	},
+
+	"questionsByTheme": {
+			"post": {
+				"tags": ["机经题目服务"],
+
+				"summary": "根据主题查找",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				{
+					"name": "purpose",
+					"enum":[0,1,2,3],
+					"in": "formData",
+					"description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+					"required": false,
+					"type": "integer"
+				},
+				{
+					"name": "partNumber",
+					"enum":["0", "1", "2","3", "4"],
+					"in": "formData",
+					"description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "questionCategory",
+					"enum":["0", "1", "2","3", "4"],
+					"in": "formData",
+					"description": "0:all, 1:PERSON, 2:EVENT, 3:OBJECT, 4:PLACE",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "questionTheme",
+					"in": "formData",
+					"description": "主题关键词",
+					"required": false,
+					"type": "string"
+				}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		},
+		
+
+		"questionsByObjectIds": {
+			"post": {
+				"tags": ["机经题目服务"],
+
+				"summary": "根据ObjectIds串查询",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				{
+					"name": "objectIdInString",
+					"in": "formData",
+					"description": "用逗号分隔的ObjectId串",
+					"schema":{
+						"example":"5d7f95dc08115617afc53e29,5d7f95dc08115617afc53ea2"
+					},
+					"required": false,
+					"type": "string"
+				}
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		},
+		"questionsById": {
+			"post": {
+				"tags": ["机经题目服务"],
+
+				"summary": "根据id查找",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				{
+					"name": "purpose",
+					"enum":[0,1,2,3],
+					"in": "formData",
+					"description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+					"required": false,
+					"type": "integer"
+				},
+				{
+					"name": "id",
+					"in": "formData",
+					"description": "",
+					"required": true,
+					"type": "string"
+				}
+
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		},
+		"newQuestionIds": {
+			"get": {
+				"tags": ["机经题目服务"],
+
+				"summary": "获取所有新题id",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		},
+		"newQuestionStats": {
+			"get": {
+				"tags": ["机经题目服务"],
+
+				"summary": "获取当季新题统计信息",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		},
+
+		"questions": {
+			"post": {
+				"tags": ["机经题目服务"],
+
+				"summary": "根据partNumber, questionType, questionCategory, questionTheme 查找",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				{
+					"name": "purpose",
+					"enum":[0,1,2,3],
+					"in": "formData",
+					"description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+					"required": false,
+					"type": "integer"
+				},
+				{
+					"name": "partNumber",
+					"enum":["0", "1", "2","3", "4"],
+					"in": "formData",
+					"description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "questionCategory",
+					"enum":["0", "1", "2","3", "4"],
+					"in": "formData",
+					"description": "0:all, 1:PERSON, 2:EVENT, 3:OBJECT, 4:PLACE",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "questionType",
+					"enum":["0", "1", "2"],
+					"in": "formData",
+					"description": "0:all, 1:当季, 2:往季",
+					"required": false,
+					"type": "string"
+				},
+
+				{
+					"name": "questionTheme",
+					"in": "formData",
+					"description": "主题关键词",
+					"required": false,
+					"type": "string"
+				}
+
+
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		},
+		"userThemes": {
+			"post": {
+				"tags": ["机经首页用户主题查询"],
+
+				"summary": "机经首页用户主题查询",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				{
+					"name": "purpose",
+					"enum":[0,1,2,3],
+					"in": "formData",
+					"description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+					"required": false,
+					"type": "integer"
+				},
+				{
+					"name": "partNumber",
+					"enum":["0", "1", "2","3", "4"],
+					"in": "formData",
+					"description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "questionCategory",
+					"enum":["0", "1", "2","3", "4"],
+					"in": "formData",
+					"description": "0:all, 1:PERSON, 2:EVENT, 3:OBJECT, 4:PLACE",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "questionType",
+					"enum":["0", "1", "2"],
+					"in": "formData",
+					"description": "0:all, 1:当季, 2:往季",
+					"required": false,
+					"type": "string"
+				},
+
+				{
+					"name": "lastTheme",
+					"in": "formData",
+					"description": "用户当前主题，新用户初始值 \"0\"",
+					"required": false,
+					"default":"0",
+					"type": "string"
+				}
+
+
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		},
+
+		"questions/search": {
+			"post": {
+				"tags": ["机经题目服务"],
+
+				"summary": "机经题目检索",
+				"consumes": [
+					"application/x-www-form-urlencoded"
+				],
+				"produces": [
+					"application/json"
+				],
+				"parameters": [
+				{
+					"name": "purpose",
+					"enum":[0,1,2,3],
+					"in": "formData",
+					"description": "0:非机经非模考,1:机经,2:模考, 3:机经and模考",
+					"required": false,
+					"type": "integer"
+				},
+				{
+					"name": "text",
+					"in": "formData",
+					"description": "搜索关键词",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "partNumber",
+					"enum":["0", "1", "2","3", "4"],
+					"in": "formData",
+					"description": "0:all, 1: only part1, 2:part2, 3:part3, 4: part2 and part3",
+					"required": false,
+					"type": "string"
+				},
+				{
+					"name": "questionCategory",
+					"enum":["0", "1", "2","3", "4"],
+					"in": "formData",
+					"description": "0:all, 1:PERSON, 2:EVENT, 3:OBJECT, 4:PLACE",
+					"required": false,
+					"type": "string"
+				},
+
+				{
+					"name": "page",
+					"in": "formData",
+					"description": "",
+					"required": false,
+					"type": "integer"
+				},{
+					"name": "pageSize",
+					"in": "formData",
+					"description": "",
+					"required": false,
+					"type": "integer"
+				}
+
+
+				],
+				"responses": {
+					"200": {
+						"description": "successful operation"
+					},
+					"400": {
+						"description": "Invalid parameter supplied"
+					}
+				}
+			}
+		}
+		
+}
