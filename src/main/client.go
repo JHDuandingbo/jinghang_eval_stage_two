@@ -68,6 +68,7 @@ type Client struct {
 
 	id   string
 	port string
+	clientip string
 
 	XFStarted bool
 	XFDone    chan string
@@ -237,18 +238,18 @@ func (c *Client) writeMessage() {
 	}
 }
 
-func getUserAddress(req *http.Request) (id string, port string) {
-	ip, port, err := net.SplitHostPort(req.RemoteAddr)
+func getUserAddress(req *http.Request) (id string, port string, clientip string) {
+	clientip, port, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
 		//return nil, log.Errorf("userip: %q is not IP:port", req.RemoteAddr)
 
 		sugar.Warnw("net.SplitHostPort failed", "err", err, "args", req.RemoteAddr)
 		return
 	}
-	id = ip + ":" + port
+	id = clientip + ":" + port
 
-	userIP := net.ParseIP(ip)
-	if userIP == nil {
+	ip := net.ParseIP(clientip)
+	if ip == nil {
 		//log.Printf("userip: %q is not IP:port", req.RemoteAddr)
 		sugar.Warnw("net.ParseIP failed", "err", err, "args", ip)
 		return
@@ -265,10 +266,10 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		sugar.Warnw("websocket.Upgrader  Upgrade() failed ", "err", err, "args", nil)
 		return
 	}
-	id, port := getUserAddress(r)
+	id, port ,clientip:= getUserAddress(r)
 	//remoteAddr := conn.RemoteAddr().(string)
 	sugar.Debugw("remote addr", "remoteAddr",r.RemoteAddr)
-	client := &Client{connectTime: time.Now(), conn: conn, id: id, port: port, valid: true, engineState: "deleted", ssRspC: make(chan []byte, 4096), ssReqC: make(chan WSMsg, 1), done: make(chan int, 1)}
+	client := &Client{connectTime: time.Now(), conn: conn, id: id, port: port, clientip:clientip, valid: true, engineState: "deleted", ssRspC: make(chan []byte, 4096), ssReqC: make(chan WSMsg, 1), done: make(chan int, 1)}
 	initDecoder(client)
 	gMap.Set(port, client)
 	go client.writeMessage()

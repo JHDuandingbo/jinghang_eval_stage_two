@@ -200,7 +200,7 @@ func buildRSP(c *Client, ssData []byte) (finalBytes []byte) {
 			r.RequestKey = c.requestKey
 			//go sendLog(r)
 			userSession := parseSession(r.SessionId)
-			sugar.Infow("Got request", "session",userSession, "requestKey", r.RequestKey, "remoteAddr", c.id )
+			sugar.Infow("Got request", "session",userSession, "requestKey", r.RequestKey, "clientip", c.clientip)
 			//calculate overall score acording to requestKey, weights from 'score_config.go'
 			requestTypeArr := strings.Split(c.requestKey, ".")
 			requestType := ""
