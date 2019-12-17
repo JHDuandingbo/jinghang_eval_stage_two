@@ -239,10 +239,11 @@ func (c *Client) writeMessage() {
 }
 
 func getUserAddress(req *http.Request) (id string, port string, clientip string) {
+	//after nginx
+
 	clientip, port, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
 		//return nil, log.Errorf("userip: %q is not IP:port", req.RemoteAddr)
-
 		sugar.Warnw("net.SplitHostPort failed", "err", err, "args", req.RemoteAddr)
 		return
 	}
@@ -253,6 +254,12 @@ func getUserAddress(req *http.Request) (id string, port string, clientip string)
 		//log.Printf("userip: %q is not IP:port", req.RemoteAddr)
 		sugar.Warnw("net.ParseIP failed", "err", err, "args", ip)
 		return
+	}
+
+	realIP := req.Header.Get("X-Real-IP")
+	sugar.Debugw("get realIP", "realIP", realIP);
+	if(len(realIP) > 0){
+		clientip = realIP
 	}
 	sugar.Debugw("new client cennected", "client", id)
 	return

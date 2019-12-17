@@ -26,7 +26,7 @@ var (
 	_BUILD_TIME__ = "";
 
 	//runtime config
-	_PORT_          = 3004;
+	_PORT_          = 3001;
 	_ITALK_URL      = "http://140.143.238.102:5432/scoreITalk";
 	italk_max_stage float64;
 )
@@ -47,8 +47,8 @@ func main() {
 	config.Init_config()
 	//load config from local file
 	v1, err := readConfig(_CONFIG_FILE_NAME_, map[string]interface{}{
-		"test_port":       3001,
-		"prod_port":       3001,
+		//"test_port":       3004,
+		//"prod_port":       3004,
 		"italk_test_url":  "http://140.143.238.102:5432/scoreITalk",
 		"italk_prod_url":  "http://www.jinghangapps.com/jingxiaoai/scoreITalk",
 		"italk_max_stage": 20,
@@ -63,6 +63,7 @@ func main() {
 	italk_max_stage = v1.GetFloat64("italk_max_stage");
 	_ITALK_URL = italk_prod_url;
 	_PORT_ = 3001;
+	//_PORT_ = 3001;
 
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
